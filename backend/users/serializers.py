@@ -21,7 +21,8 @@ class UserSerializer(serializers.ModelSerializer):
                 'organisation_type': 'Organisation type is required for donors.'
             })
         return data
-       
+
+
     def create(self, validated_data):
         user = User.objects.create_user( #calls custom user manager's create_user method 
             email=validated_data['email'],
