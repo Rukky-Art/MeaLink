@@ -28,25 +28,38 @@ class UserManager(BaseUserManager):
 
 class User(AbstractBaseUser, PermissionsMixin):
     ROLE_CHOICES = (
+        ('admin', 'Admin'),
         ('donor', 'Donor'),
+        ('partner', 'Partner'),
         ('receiver', 'Receiver'),
-        ('admin', 'Admin')
     )
 
-    ORG_TYPE_CHOICES = [
+    DONOR_TYPE_CHOICES = [
         ('restaurant', 'Restaurant'),
         ('hotel', 'Hotel'),
         ('catering', 'Catering'),
-        ('individual', 'Individual'),
+        ('supermarket', 'Supermarket'),
+        ('bakery', 'Bakery'),
+        ('event_center', 'Event Center'),
+        ('cafeteria', 'Cafeteria'),
+        ('other', 'Other'),
+    ]
+
+    PARTNER_TYPE_CHOICES = [
         ('food_bank', 'Food Bank'),
         ('ngo', 'NGO'),
+        ('church/mosque', 'Church/mosque'),
+        ('shelter', 'Shelter'),
+        ('community_coordinator', 'Community Coordinator'),
+        ('local_volunteer_group', 'Local Volunteer Group'),
+        ('other', 'Other'),
     ]
 
     email = models.EmailField(unique=True)
     name = models.CharField(max_length=255)
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)  # 'donor' or 'receiver' or 'admin'
-    organisation_type = models.CharField(max_length=20, choices=ORG_TYPE_CHOICES, blank=True, null=True)  #only for donors
+    organisation_type = models.CharField(max_length=225, choices=DONOR_TYPE_CHOICES + PARTNER_TYPE_CHOICES, blank=True, null=True)  #only for donors
     address = models.CharField(max_length=255, blank=True, null=True)
     city = models.CharField(max_length=100)
     country = models.CharField(max_length=100)
