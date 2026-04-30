@@ -40,7 +40,8 @@ class UserSerializer(serializers.ModelSerializer):
                 })
 
         return data
-       
+
+
     def create(self, validated_data):
         user = User.objects.create_user( #calls custom user manager's create_user method 
             email=validated_data['email'],
