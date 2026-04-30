@@ -26,6 +26,10 @@ class Food(models.Model):
     pickup_start_time = models.DateTimeField()
     pickup_end_time = models.DateTimeField()
     expiry_time = models.DateTimeField()
+    contact_person_name = models.CharField(max_length=255, blank=True, null=True)
+    contact_person_phone = models.CharField(max_length=20, blank=True, null=True)
+    pickup_location = models.CharField(max_length=255, blank=True, null=True)
+    notes = models.TextField(blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='available')
     created_at = models.DateTimeField(auto_now_add=True)
 

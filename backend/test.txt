@@ -10,3 +10,18 @@ git checkout -b feat/
 #email, name, city, country required
 
 python manage.py test users
+
+{
+  "food_type": "Cooked Rice & Stew",
+  "category": "cooked",
+  "quantity_estimated": 50,
+  "quantity_unit": "portions",
+  "pickup_start_time": "2026-04-30T13:39:35.043Z",
+  "pickup_end_time": "2026-04-30T13:39:35.043Z",
+  "expiry_time": "2026-04-30T13:39:35.043Z",
+  "status": "available",
+  "contact_person_name": "Nessa",
+  "contact_person_phone": "124679753278",
+  "pickup_location": "Accra, Ghana",
+  "notes": "Each portion has meat and chicken"
+}

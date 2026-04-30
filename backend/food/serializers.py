@@ -11,6 +11,7 @@ class FoodListingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Food
         fields = ['id', 'donor', 'food_type', 'category', 'quantity_estimated', 'quantity_unit', 
-                  'pickup_start_time', 'pickup_end_time', 'expiry_time', 'status', 'created_at'            
+                  'pickup_start_time', 'pickup_end_time', 'expiry_time', 'status', 'created_at', 
+                  'contact_person_name', 'contact_person_phone', 'pickup_location', 'notes'
         ]
         read_only_fields = ['id', 'donor', 'created_at']
