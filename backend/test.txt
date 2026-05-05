@@ -7,6 +7,9 @@ python manage.py runserver
 
 git checkout -b feat/
 
+python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+
+
 #email, name, city, country required
 
 python manage.py test users
