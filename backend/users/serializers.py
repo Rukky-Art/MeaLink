@@ -10,7 +10,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'id', 'email', 'name', 'phone_number', 'role', 'organisation_type', 
-            'address', 'city', 'country', 'latitude', 'longitude', 'password', 'created_at'
+            'address', 'city', 'country', 'password', 'created_at'
         ]
         read_only_fields = ['id', 'created_at']
 
@@ -53,8 +53,6 @@ class UserSerializer(serializers.ModelSerializer):
             address=validated_data.get('address', None),
             city=validated_data['city'],
             country=validated_data['country'],
-            latitude=validated_data.get('latitude', None),
-            longitude=validated_data.get('longitude', None),
         )
         return user
         
