@@ -41,3 +41,15 @@ class UserListView(APIView):
         users = User.objects.all()
         serializer = UserSerializer(users, many=True)
         return Response(data=serializer.data, status=status.HTTP_200_OK)
+
+class UserProfileView(APIView):
+    serializer_class = UserSerializer
+
+    @extend_schema( 
+        request=None,
+        responses={200: UserSerializer}
+    )
+    def get(self, request):
+        user = request.user
+        serializer = UserSerializer(user)
+        return Response(data=serializer.data, status=status.HTTP_200_OK)
