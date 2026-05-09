@@ -19,21 +19,47 @@ class FoodListingsCreateView(APIView):
 
     #donors can only see their own food listings
     def get(self, request):
-        food_listings = Food.objects.filter(donor=request.user)
+
+        if request.user.role != 'donor':
+            return Response(data={"error": "Only donors can view their food listings"}, status=status.HTTP_403_FORBIDDEN)
+        food_listings = Food.objects.filter(posted_by=request.user)
         serializer = self.serializer_class(food_listings, many=True)
         return Response(data=serializer.data, status=status.HTTP_200_OK)
-    
+        
+
     #donors can only create food listings for themselves
     def post(self, request):
+        # Check permission first
+        if request.user.role != 'donor':
+            return Response(data={"error": "Only donors can create food listings"}, status=status.HTTP_403_FORBIDDEN)
+        
         data = request.data
-        donor = request.user
+        posted_by = request.user
         serializer = self.serializer_class(data=data)
         if serializer.is_valid():
-            serializer.save(donor=donor)# Set the user field to the current user when saving the todo
+            serializer.save(posted_by=posted_by)# Set the user field to the current user when saving the todo
             return Response(data=serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
+class FoodListingsListView(APIView):
+    serializer_class = FoodListingsSerializer
+
+    #all users apart from donors can see all available food listings
+    def get(self, request):
+        #sees available food listings in their city
+        if request.user.role == 'partner' or request.user.role == 'receiver':
+            food_listings = Food.objects.filter(
+                status='available',
+                pickup_city=request.user.city
+            )
+        elif request.user.role == 'admin':
+            food_listings = Food.objects.all()
+        else:
+            return Response(data={"error": "Access denied"}, status=status.HTTP_403_FORBIDDEN)
+
+        serializer = self.serializer_class(food_listings, many=True)
+        return Response(data=serializer.data, status=status.HTTP_200_OK)
 
 class FoodListingsDetailView(APIView):
     serializer_class = FoodListingsSerializer
@@ -41,7 +67,7 @@ class FoodListingsDetailView(APIView):
     #donors can see a specific food listing that they created
     def get(self, request, pk):
         try:
-            food_listing = Food.objects.get(pk=pk, donor=request.user)
+            food_listing = Food.objects.get(pk=pk, posted_by=request.user)
         except Food.DoesNotExist:
             return Response(data={"error": "Food listing not found"}, status=status.HTTP_404_NOT_FOUND)
         
@@ -51,7 +77,7 @@ class FoodListingsDetailView(APIView):
     #donors can update their food listing
     def patch(self, request, pk):
         try:
-            food_listing = Food.objects.get(pk=pk, donor=request.user)
+            food_listing = Food.objects.get(pk=pk, posted_by=request.user)
         except Food.DoesNotExist:
             return Response(data={"error": "Food listing not found"}, status=status.HTTP_404_NOT_FOUND)
         
@@ -66,7 +92,7 @@ class FoodListingsDetailView(APIView):
     #donors can delete their food listing
     def delete(self, request, pk):
         try:
-            food_listing = Food.objects.get(pk=pk, donor=request.user)
+            food_listing = Food.objects.get(pk=pk, posted_by=request.user)
         except Food.DoesNotExist:
             return Response(data={"error": "Food listing not found"}, status=status.HTTP_404_NOT_FOUND)
         
