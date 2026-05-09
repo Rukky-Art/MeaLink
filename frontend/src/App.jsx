@@ -4,7 +4,8 @@ import Login from './pages/Login';
 import RoleSelection from './pages/RoleSelector';
 import RegisterDetails from './pages/RegisterDetails';
 import VerificationPage from './pages/VerificationPage';
-
+import MainLayout from './layout/MainLayout';
+import DashboardHome from './pages/DashboardHome';
 function App() {
   return (
     <Routes>
@@ -17,6 +18,10 @@ function App() {
         <Route path="/register/details/:role" element={<RegisterDetails />} />
         <Route path="/verification-pending" element={<VerificationPage />} />
       </Route>
+      <Route element={<MainLayout />}>
+        {/* This is the only one you need! */}
+        <Route path="/dashboard" element={<DashboardHome />} />
+      </Route>
     </Routes>
   );
 }
@@ -24,21 +29,3 @@ function App() {
 export default App;
 
 
-// import { Routes, Route } from 'react-router';
-// import AuthLayout from './layouts/AuthLayout';
-// import Login from './pages/Login';
-// import RoleSelection from './pages/RoleSelection';
-// import Register from './pages/Register';
-
-// function App() {
-//   return (
-//     <Routes>
-//       <Route element={<AuthLayout />}>
-//         <Route path="/login" element={<Login />} />
-//         <Route path="/register/select-role" element={<RoleSelection />} />
-//         <Route path="/register/details/:role" element={<Register />} />
-//       </Route>
-//       {/* Add your dashboard routes here later */}
-//     </Routes>
-//   );
-// }

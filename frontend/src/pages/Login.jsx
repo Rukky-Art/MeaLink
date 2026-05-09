@@ -4,8 +4,9 @@ import FormInput from '../components/FormInput'
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema } from '../utils/validation';
 import { useDispatch, useSelector } from 'react-redux';
-import { loginUser } from '../store/slices/authSlice';
+import { loginUser, fetchUserProfile } from '../store/slices/authSlice';
 import { useNavigate } from 'react-router';
+
 
 const Login = () => {
 
@@ -19,13 +20,14 @@ const Login = () => {
     mode: "onTouched" // Validate on touch for better UX
   });
 
- const onSubmit = (data) => {
-    dispatch(loginUser(data)).then((result) => {
-      if (result.meta.requestStatus === 'fulfilled') {
-        navigate('/dashboard'); // Or verification-pending based on user data
-      }
-    });
-  };
+const onSubmit = async (data) => {
+  const result = await dispatch(loginUser(data));
+  if (loginUser.fulfilled.match(result)) {
+    // Immediately fetch the profile now that we have a token
+    await dispatch(fetchUserProfile());
+    navigate('/dashboard');
+  }
+};
 
   return (
     <div className="animate-in fade-in duration-500">

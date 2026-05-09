@@ -26,10 +26,26 @@ export const registerUser = createAsyncThunk(
   }
 );
 
+// New Thunk to get user details using the token
+// Thunk to get the logged-in user's data
+export const fetchUserProfile = createAsyncThunk('auth/fetchProfile', async (_, thunkAPI) => {
+  try {
+    const response = await api.get('users/me/'); 
+    // Save the user object to localStorage so it persists on page refresh
+    localStorage.setItem('user', JSON.stringify(response.data));
+    return response.data;
+  } catch (error) {
+    // If the token is invalid or expired, handle the error
+    return thunkAPI.rejectWithValue(error.response?.data || "Failed to fetch profile");
+  }
+});
+
+
+
 const authSlice = createSlice({
   name: 'auth',
   initialState: {
-    user: null,
+    user: JSON.parse(localStorage.getItem('user')) || null,
     token: localStorage.getItem('token') || null,
     isLoading: false,
     error: null,
@@ -39,6 +55,7 @@ const authSlice = createSlice({
       state.user = null;
       state.token = null;
       localStorage.removeItem('token');
+      localStorage.removeItem('user');
     },
   },
   extraReducers: (builder) => {
@@ -46,16 +63,22 @@ const authSlice = createSlice({
       .addCase(loginUser.pending, (state) => {
         state.isLoading = true;
         state.error = null;
+        
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.isLoading = false;
         state.user = action.payload.user;
         state.token = action.payload.access;
+        localStorage.setItem('token', action.payload.access);
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
-      });
+      })
+      .addCase(fetchUserProfile.fulfilled, (state, action) => {
+        state.user = action.payload;
+
+      })
   },
 });
 
