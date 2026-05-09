@@ -40,18 +40,18 @@ class User(AbstractBaseUser, PermissionsMixin):
         ('catering', 'Catering'),
         ('supermarket', 'Supermarket'),
         ('bakery', 'Bakery'),
-        ('event_center', 'Event Center'),
+        ('event center', 'Event Center'),
         ('cafeteria', 'Cafeteria'),
         ('other', 'Other'),
     ]
 
     PARTNER_TYPE_CHOICES = [
-        ('food_bank', 'Food Bank'),
+        ('food bank', 'Food Bank'),
         ('ngo', 'NGO'),
-        ('church/mosque', 'Church/mosque'),
+        ('religious organization', 'Religious Organization'),
         ('shelter', 'Shelter'),
-        ('community_coordinator', 'Community Coordinator'),
-        ('local_volunteer_group', 'Local Volunteer Group'),
+        ('community coordinator', 'Community Coordinator'),
+        ('local volunteer group', 'Local Volunteer Group'),
         ('other', 'Other'),
     ]
 

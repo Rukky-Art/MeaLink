@@ -28,3 +28,26 @@ python manage.py test users
   "pickup_location": "Accra, Ghana",
   "notes": "Each portion has meat and chicken"
 }
+
+brew install postgresql@16
+brew services start postgresql@16
+
+psql postgres or psql -U postgres
+postgres=#
+CREATE DATABASE mealink_dev;
+\l
+\q
+python manage.py migrate
+
+#to get postregres username
+psql -d postgres
+SELECT current_user;
+\q
+
+- When partner claim change food.status to 'claimed' x
+- When cancelled, remove from claimers claim list
+- When user regsters, it goes straight into app
+- /api/food/food-listings/ ====shows blank for partners
+-add no food donations available at the moment for get claims
+-add no claims yet for donor
+-to post claim, they need to know what they are claiming x
