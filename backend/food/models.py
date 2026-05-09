@@ -15,10 +15,12 @@ class Food(models.Model):
     STATUS_CHOICES = [
         ('available', 'Available'),
         ('claimed', 'Claimed'),
+        ('picked up', 'Picked Up'),
+        ('distributed', 'Distributed'),
         ('expired', 'Expired'),
     ]
 
-    donor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='donor')
+    posted_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='food_listings')
     food_type = models.CharField(max_length=1024)
     category = models.CharField(max_length=1024, choices=CATEGORY_CHOICES)
     quantity_estimated = models.PositiveIntegerField()
@@ -26,11 +28,15 @@ class Food(models.Model):
     pickup_start_time = models.DateTimeField()
     pickup_end_time = models.DateTimeField()
     expiry_time = models.DateTimeField()
-    contact_person_name = models.CharField(max_length=255, blank=True, null=True)
-    contact_person_phone = models.CharField(max_length=20, blank=True, null=True)
-    pickup_location = models.CharField(max_length=255, blank=True, null=True)
+    contact_person_name = models.CharField(max_length=255)
+    contact_person_phone = models.CharField(max_length=20)
+    pickup_address = models.CharField(max_length=255)
+    pickup_city = models.CharField(max_length=100) 
     notes = models.TextField(blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='available')
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.food_type} by {self.posted_by.name}"
 
 # Create your models here.

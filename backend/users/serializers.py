@@ -16,8 +16,8 @@ class UserSerializer(serializers.ModelSerializer):
 
     #donors must have organisation type
     def validate(self, data):
-        donor_types = ['restaurant', 'hotel', 'catering', 'supermarket', 'bakery', 'event_center', 'cafeteria', 'other']
-        partner_types = ['food_bank', 'ngo', 'church/mosque', 'shelter', 'community_coordinator', 'local_volunteer_group', 'other']
+        donor_types = ['restaurant', 'hotel', 'catering', 'supermarket', 'bakery', 'event center', 'cafeteria', 'other']
+        partner_types = ['food bank', 'ngo', 'religious organization', 'shelter', 'community coordinator', 'local volunteer group', 'other']
 
         if data.get('role') == 'donor':
             if not data.get('organisation_type'):
