@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+@theme {
+  /* Brand Colors from Screenshots */
+  --color-brand-green: #006D44; /* The deep green in Screenshot (139).png */
+  --color-brand-mint: #E8F3EE;  /* The light panel background */
+  --color-brand-gray: #6B7280;
+  
+  /* Typography */
+  --font-be-vietnam: "Be Vietnam Pro", sans-serif;
+}
+
+:root {
+  font-family: var(--font-be-vietnam);
+}
