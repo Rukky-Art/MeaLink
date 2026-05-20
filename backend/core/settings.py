@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'users',
     'food',
     'claims',
+    'distribution',
 ]
 
 AUTH_USER_MODEL = 'users.User'
@@ -174,8 +175,8 @@ SIMPLE_JWT = {
 
 
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'MealLink API',
-    'DESCRIPTION': 'API documentation for MealLink application',
+    'TITLE': 'MeaLink API',
+    'DESCRIPTION': 'API documentation for MeaLink application',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
     # OTHER SETTINGS
