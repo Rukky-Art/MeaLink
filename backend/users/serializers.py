@@ -9,7 +9,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            'id', 'email', 'name', 'phone_number', 'role', 'organisation_type', 
+            'id', 'email', 'name', 'phone_number', 'role', 'business_registration_number', 'organisation_type',
             'address', 'city', 'country', 'password', 'created_at'
         ]
         read_only_fields = ['id', 'created_at']
@@ -49,6 +49,7 @@ class UserSerializer(serializers.ModelSerializer):
             name=validated_data['name'],
             phone_number=validated_data.get('phone_number', None),
             role=validated_data['role'],
+            business_registration_number=validated_data.get('business_registration_number', None),
             organisation_type=validated_data.get('organisation_type', None),
             address=validated_data.get('address', None),
             city=validated_data['city'],
