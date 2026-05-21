@@ -42,11 +42,15 @@ export const fetchUserProfile = createAsyncThunk('auth/fetchProfile', async (_, 
 
 
 
+// ... thunks remain the same
+
 const authSlice = createSlice({
   name: 'auth',
   initialState: {
-    user: JSON.parse(localStorage.getItem('user')) || null,
+    // 1. Critical: use the exact same keys here as you do in setItem
+    user: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null,
     token: localStorage.getItem('token') || null,
+    isAuthenticated: !!localStorage.getItem('token'),
     isLoading: false,
     error: null,
   },
@@ -54,6 +58,7 @@ const authSlice = createSlice({
     logout: (state) => {
       state.user = null;
       state.token = null;
+      state.isAuthenticated = false;
       localStorage.removeItem('token');
       localStorage.removeItem('user');
     },
@@ -63,24 +68,40 @@ const authSlice = createSlice({
       .addCase(loginUser.pending, (state) => {
         state.isLoading = true;
         state.error = null;
-        
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.user = action.payload.user;
-        state.token = action.payload.access;
+        state.token = action.payload.access; // SimpleJWT returns 'access'
+        state.isAuthenticated = true;
+        // Don't set state.user here yet, because the login response doesn't have it!
         localStorage.setItem('token', action.payload.access);
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
+        state.isAuthenticated = false;
       })
+      // 2. This is where the User identity is actually born
       .addCase(fetchUserProfile.fulfilled, (state, action) => {
         state.user = action.payload;
-
+        state.isAuthenticated = true;
+        // Persist the user object so it survives the refresh
+        localStorage.setItem('user', JSON.stringify(action.payload));
       })
+      .addCase(fetchUserProfile.rejected, (state) => {
+        // If the profile fetch fails (expired token), clean up everything
+        state.user = null;
+        state.token = null;
+        state.isAuthenticated = false;
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      });
   },
 });
 
 export const { logout } = authSlice.actions;
+
+
+export const selectIsAuthenticated = (state) => !!state.auth.token;
+
 export default authSlice.reducer;

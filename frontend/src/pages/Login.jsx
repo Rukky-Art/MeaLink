@@ -17,13 +17,16 @@ const Login = () => {
   const { isLoading, error } = authState; 
   const { register, handleSubmit, formState: { errors } } = useForm({
     resolver: zodResolver(loginSchema),
-    mode: "onTouched" // Validate on touch for better UX
+    mode: "onTouched" 
   });
 
 const onSubmit = async (data) => {
-  const result = await dispatch(loginUser(data));
+  const sanitizedData = {
+    email: data.email.trim().toLowerCase(),
+    password: data.password // Don't trim passwords! Spaces can be intentional there.
+  };
+  const result = await dispatch(loginUser(sanitizedData));
   if (loginUser.fulfilled.match(result)) {
-    // Immediately fetch the profile now that we have a token
     await dispatch(fetchUserProfile());
     navigate('/dashboard');
   }
