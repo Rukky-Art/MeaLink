@@ -3,7 +3,7 @@ import {
   Package, 
   Plus 
 } from 'lucide-react';
-import ImpactChart from '../components/dashboard/ImpactChart';
+import ImpactChart from '../components/dashboard/impactChart';
 
 const Dashboard = () => {
   const { user } = useSelector((state) => state.auth);
