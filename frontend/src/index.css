@@ -8,8 +8,27 @@
   
   /* Typography */
   --font-be-vietnam: "Be Vietnam Pro", sans-serif;
+
+  /* Custom Animations */
+  --animate-float-slow: float 6s ease-in-out infinite;
+  --animate-float-delayed: float 6s ease-in-out infinite 3s;
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+  }
 }
 
 :root {
   font-family: var(--font-be-vietnam);
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.8s ease-out;
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
 }

@@ -2,7 +2,7 @@ import { Search, MapPin, Clock } from 'lucide-react';
 
 const PartnerDashboard = () => {
   return (
-    <div className="space-y-6">
+    <div className="p-12">
       {/* Welcome Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Available Meals Near You</h1>
