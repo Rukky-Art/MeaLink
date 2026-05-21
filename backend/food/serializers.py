@@ -10,7 +10,7 @@ class FoodListingsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Food
-        fields = ['id', 'posted_by', 'food_type', 'category', 'quantity_estimated', 'quantity_unit', 
+        fields = ['id', 'posted_by', 'food_type', 'category', 'quantity_estimated', 'quantity_unit', 'image',
                   'pickup_start_time', 'pickup_end_time', 'expiry_time', 'status', 'created_at', 
                   'contact_person_name', 'contact_person_phone', 'pickup_address', 'pickup_city', 'notes'
         ]

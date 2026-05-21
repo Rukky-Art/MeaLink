@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import permissions
+from rest_framework.parsers import MultiPartParser, FormParser
 
 from food.models import Food
 from drf_spectacular.utils import extend_schema
@@ -12,11 +13,9 @@ from drf_spectacular.utils import extend_schema
 
 class FoodListingsCreateView(APIView):
     serializer_class = FoodListingsSerializer
+    parser_classes = (MultiPartParser, FormParser)
 
-    @extend_schema(
-        request=FoodListingsSerializer    
-    )
-
+    @extend_schema(operation_id="list_my_food_listings")
     #donors can only see their own food listings
     def get(self, request):
 
@@ -26,7 +25,10 @@ class FoodListingsCreateView(APIView):
         serializer = self.serializer_class(food_listings, many=True)
         return Response(data=serializer.data, status=status.HTTP_200_OK)
         
-
+    @extend_schema(
+        request={'multipart/form-data': FoodListingsSerializer},
+        responses={201: FoodListingsSerializer}    
+    )
     #donors can only create food listings for themselves
     def post(self, request):
         # Check permission first
@@ -35,17 +37,21 @@ class FoodListingsCreateView(APIView):
         
         data = request.data
         posted_by = request.user
-        serializer = self.serializer_class(data=data)
+        serializer = self.serializer_class(
+            data=data, 
+            context={'request': request}  # ← needed for full image URL generation
+        )
         if serializer.is_valid():
             serializer.save(posted_by=posted_by)# Set the user field to the current user when saving the todo
             return Response(data=serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
+
 class FoodListingsListView(APIView):
     serializer_class = FoodListingsSerializer
     permission_classes = [permissions.AllowAny]
 
+    @extend_schema(operation_id="list_all_food_listings")
     #all users apart from donors can see all available food listings
     def get(self, request):
         # If user is not logged in → show all available listings
@@ -69,6 +75,7 @@ class FoodListingsListView(APIView):
 class FoodListingsDetailView(APIView):
     serializer_class = FoodListingsSerializer
 
+    @extend_schema(operation_id="retrieve_food_listing")
     #donors can see a specific food listing that they created
     def get(self, request, pk):
         try:
