@@ -44,11 +44,16 @@ class FoodListingsCreateView(APIView):
         
 class FoodListingsListView(APIView):
     serializer_class = FoodListingsSerializer
+    permission_classes = [permissions.AllowAny]
 
     #all users apart from donors can see all available food listings
     def get(self, request):
-        #sees available food listings in their city
-        if request.user.role == 'partner' or request.user.role == 'receiver':
+        # If user is not logged in → show all available listings
+        if not request.user.is_authenticated:
+            food_listings = Food.objects.filter(status='available')
+        
+        # If logged in partner, filter by their city
+        elif request.user.role == 'partner':
             food_listings = Food.objects.filter(
                 status='available',
                 pickup_city=request.user.city
@@ -56,7 +61,7 @@ class FoodListingsListView(APIView):
         elif request.user.role == 'admin':
             food_listings = Food.objects.all()
         else:
-            return Response(data={"error": "Access denied"}, status=status.HTTP_403_FORBIDDEN)
+            food_listings = Food.objects.filter(status='available')
 
         serializer = self.serializer_class(food_listings, many=True)
         return Response(data=serializer.data, status=status.HTTP_200_OK)
