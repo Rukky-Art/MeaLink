@@ -6,7 +6,7 @@ const ImpactStats = () => {
   ];
 
   return (
-    <section className="py-20 px-6 max-w-7xl mx-auto">
+    <section className="py-20 px-6 max-w-7xl mx-auto" id="impact">
       <h2 className="text-brand-green font-bold text-sm uppercase tracking-widest mb-4">Impact</h2>
       <h3 className="text-4xl md:text-5xl font-bold text-gray-900 mb-12 max-w-2xl">
         Numbers that mean meals on tables.

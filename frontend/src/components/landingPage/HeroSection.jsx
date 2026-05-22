@@ -1,12 +1,12 @@
 import { useNavigate } from 'react-router';
 import { ArrowRight, ShieldCheck} from 'lucide-react';
-import heroImage from '../../assets/LandingPage/landPage1.svg'
+import heroImage from '../../assets/LandingPage/HeroImage.svg'
 
 const HeroSection = () => {
   const navigate = useNavigate();
 
   return (
-    <section className="w-full bg-white font-be-vietnam pt-28 pb-16 md:pt-36 md:pb-24 overflow-hidden">
+    <section id='hero' className="w-full bg-white font-be-vietnam pt-28 pb-16 md:pt-36 md:pb-24 overflow-hidden">
       <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
         
         {/* ================= LEFT COLUMN: CONTENT (Takes 5 cols on desktop) ================= */}

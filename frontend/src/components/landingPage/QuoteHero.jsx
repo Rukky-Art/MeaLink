@@ -2,7 +2,7 @@ import community from '../../assets/LandingPage/community.jpg'
 
 const QuoteHero = () => {
   return (
-    <section className="px-6 py-10">
+    <section className="px-6 py-10" id='quote'>
       <div className="max-w-7xl mx-auto relative h-[500px] rounded-[40px] overflow-hidden shadow-2xl">
         <div className="absolute inset-0">
           <img 

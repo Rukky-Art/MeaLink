@@ -27,12 +27,12 @@ const HowItWorks = () => {
   ];
 
   return (
-    <section className="py-24 bg-white">
+    <section className="py-24 bg-white" id='how'>
       <div className="max-w-7xl mx-auto px-6">
         <div className="mb-16">
           <span className="text-brand-green font-bold tracking-widest text-xs uppercase">How it works</span>
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mt-4">
-            From surplus to served — <br /> in four steps.
+            From surplus to served in four steps.
           </h2>
         </div>
         

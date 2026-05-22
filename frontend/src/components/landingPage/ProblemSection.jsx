@@ -2,7 +2,7 @@ import croissant from '../../assets/LandingPage/croissants.jpg'
 
 const ProblemSection = () => {
   return (
-    <section className="w-full bg-brand-mint/30 py-20 lg:py-32 overflow-hidden">
+    <section className="w-full bg-brand-mint/30 py-20 lg:py-32 overflow-hidden" id='problem'>
       <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
         
         {/* Left Side: Large Rounded Image */}

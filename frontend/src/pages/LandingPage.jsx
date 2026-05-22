@@ -2,7 +2,7 @@ import Navbar from '../components/Navbar';
 import HeroSection from '../components/landingPage/HeroSection';
 import ProblemSection from '../components/landingPage/ProblemSection';
 import HowItWorks from '../components/landingPage/HowItWorks';
-import ListingCard from '../components/landingPage/ListingCards';
+import AvailableListings from '../components/landingPage/ListingCards';
 import FinalCTA from '../components/landingPage/FinalCTA';
 import ImpactStats from '../components/landingPage/ImpactStats';
 import FeatureGrid from '../components/landingPage/FeatureGrid';
@@ -16,7 +16,10 @@ const LandingPage = () => {
         <HeroSection />
         <ProblemSection />
         <HowItWorks/>
-        <ListingCard/>
+        <div id='listing'>
+
+        <AvailableListings/>
+        </div>
         <FeatureGrid/>
         <QuoteHero/>
         <ImpactStats/>

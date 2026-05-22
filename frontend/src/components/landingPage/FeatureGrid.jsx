@@ -29,10 +29,10 @@ const FeatureGrid = () => {
   ];
 
   return (
-    <section className="py-20 px-6 max-w-7xl mx-auto">
+    <section className="py-20 px-6 max-w-7xl mx-auto" id='feature'>
           <h2 className="text-brand-green font-bold text-sm uppercase tracking-widest mb-4">Built on Trust</h2>
       <h3 className="text-4xl md:text-5xl font-bold text-gray-900 mb-12 max-w-2xl">
-        Built for Trust. Designd for Speed.
+        Built for Trust. Designed for Speed.
       </h3>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {features.map((f, i) => (
