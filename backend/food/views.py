@@ -45,27 +45,19 @@ class FoodListingsCreateView(APIView):
         else:
             return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class FoodListingsLandingPageListView(APIView):
+class FoodListingsListView(APIView):
     serializer_class = FoodListingsSerializer
     permission_classes = [permissions.AllowAny]
 
     @extend_schema(operation_id="list_all_food_listings")
+    #all users apart from donors can see all available food listings
     def get(self, request):
         # If user is not logged in → show all available listings
         if not request.user.is_authenticated:
             food_listings = Food.objects.filter(status='available')
         
-        serializer = self.serializer_class(food_listings, many=True)
-        return Response(data=serializer.data, status=status.HTTP_200_OK)
-    
-class FoodListingsPartnerListView(APIView):
-    serializer_class = FoodListingsSerializer
-
-    @extend_schema(operation_id="list_partner_food_listings")
-
-    #If logged in partner, filter by their city
-    def get(self, request):
-        if request.user.role == 'partner':
+        # If logged in partner, filter by their city
+        elif request.user.role == 'partner':
             food_listings = Food.objects.filter(
                 status='available',
                 pickup_city=request.user.city
