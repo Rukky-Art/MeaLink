@@ -1,5 +1,5 @@
 import { useSelector } from 'react-redux';
-import DonorDashboard from './DonorDashboard';
+import DonorDashboard from './donorFolder/DonorDashboard';
 import PartnerDashboard from './PartnerDashboard';
 
 const DashboardHome = () => {

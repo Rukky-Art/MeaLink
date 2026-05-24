@@ -1,7 +1,7 @@
 import step1 from '../../assets/LandingPage/step1.jpg'
 import step2 from '../../assets/LandingPage/step2.jpg'
-import step3 from '../../assets/LandingPage/step3.jpg'
-import step4 from '../../assets/LandingPage/step4.jpg'
+import step3 from '../../assets/LandingPage/Container.svg'
+import step4 from '../../assets/LandingPage/Container2.svg'
 
 const StepCard = ({ number, title, desc, img, delay }) => (
   <div 

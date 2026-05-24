@@ -126,7 +126,7 @@ const AvailableListings = () => {
               Real food. Available today.
             </h2>
           </div>
-          <button className="text-brand-green font-bold text-sm hover:translate-x-1 transition-transform inline-flex items-center gap-2">
+          <button onClick={handleClaimClick} className="text-brand-green font-bold text-sm hover:translate-x-1 transition-transform inline-flex items-center gap-2">
             See all available listings <ArrowRight size={16} />
           </button>
         </div>

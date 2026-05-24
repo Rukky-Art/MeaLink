@@ -1,4 +1,4 @@
-import Badge from "./Badge";
+
 
 function Table({ columns, data, actions }) {
   return (

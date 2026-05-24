@@ -7,6 +7,7 @@ import FinalCTA from '../components/landingPage/FinalCTA';
 import ImpactStats from '../components/landingPage/ImpactStats';
 import FeatureGrid from '../components/landingPage/FeatureGrid';
 import QuoteHero from '../components/landingPage/QuoteHero';
+import Footer from '../components/landingPage/Footer';
 
 const LandingPage = () => {
   return (
@@ -24,6 +25,7 @@ const LandingPage = () => {
         <QuoteHero/>
         <ImpactStats/>
         <FinalCTA/>
+        <Footer/>
       </main>
     </div>
   );
