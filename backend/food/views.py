@@ -54,7 +54,9 @@ class FoodListingsListView(APIView):
     def get(self, request):
         # If user is not logged in → show all available listings
         if not request.user.is_authenticated:
-            food_listings = Food.objects.filter(status='available')
+            food_listings = Food.objects.filter(
+                status='available',
+            )[:5]
         
         # If logged in partner, filter by their city
         elif request.user.role == 'partner':
