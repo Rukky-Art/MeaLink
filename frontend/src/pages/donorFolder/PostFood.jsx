@@ -24,9 +24,7 @@ import api from '../../auth/api';
 const CATEGORIES = [
   { value: 'cooked', label: 'Cooked Meal', emoji: '🍲' },
   { value: 'raw', label: 'Raw Ingredients', emoji: '🥬' },
-  { value: 'bakery', label: 'Bakery Items', emoji: '🍞' },
-  { value: 'fruits', label: 'Fruits & Veggies', emoji: '🍎' },
-  { value: 'canned', label: 'Canned / Packed', emoji: '🥫' },
+  { value: 'packaged', label: 'Packaged', emoji: '🥫' },
   { value: 'other', label: 'Other', emoji: '📦' },
 ];
 

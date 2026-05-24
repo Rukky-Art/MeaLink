@@ -8,7 +8,7 @@ export const fetchAvailableFood = createAsyncThunk(
     try {
       // The backend uses 'request.user', so our 'api.js' 
       // will automatically send the JWT token needed for the filtering.
-      const response = await api.get('food/'); 
+      const response = await api.get('food/all-listings/'); 
       return response.data;
     } catch (err) {
       return rejectWithValue(err.response?.data || "Could not fetch food");

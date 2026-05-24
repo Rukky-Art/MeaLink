@@ -21,7 +21,7 @@ const FinalCTA = () => {
     } else {
       // If not logged in, send them to register but keep track of what they wanted to be
       // You could just do navigate('/login') or navigate('/register')
-      navigate('/register'); 
+      navigate('/login'); 
     }
   };
 

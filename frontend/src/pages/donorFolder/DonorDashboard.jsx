@@ -22,7 +22,7 @@ const DonorDashboard = () => {
   };
 
   return (
-    <div className="p-8 space-y-8 bg-gray-50 min-h-screen font-be-vietnam">
+    <div className="p-10 space-y-8 bg-gray-50 min-h-screen font-be-vietnam">
       {/* Header - Always visible */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
