@@ -4,7 +4,6 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import permissions
-from rest_framework.parsers import MultiPartParser, FormParser
 
 from food.models import Food
 from drf_spectacular.utils import extend_schema
@@ -13,7 +12,6 @@ from drf_spectacular.utils import extend_schema
 
 class FoodListingsCreateView(APIView):
     serializer_class = FoodListingsSerializer
-    parser_classes = (MultiPartParser, FormParser)
 
     @extend_schema(operation_id="list_my_food_listings")
     #donors can only see their own food listings
@@ -26,7 +24,7 @@ class FoodListingsCreateView(APIView):
         return Response(data=serializer.data, status=status.HTTP_200_OK)
         
     @extend_schema(
-        request={'multipart/form-data': FoodListingsSerializer},
+        request=FoodListingsSerializer,
         responses={201: FoodListingsSerializer}    
     )
     #donors can only create food listings for themselves
@@ -67,7 +65,7 @@ class FoodListingsListView(APIView):
         elif request.user.role == 'admin':
             food_listings = Food.objects.all()
         else:
-            food_listings = Food.objects.filter(status='available')
+            return Response(data={"error": "Access denied"}, status=status.HTTP_403_FORBIDDEN)
 
         serializer = self.serializer_class(food_listings, many=True)
         return Response(data=serializer.data, status=status.HTTP_200_OK)
