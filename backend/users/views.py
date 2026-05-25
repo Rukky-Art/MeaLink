@@ -53,3 +53,29 @@ class UserProfileView(APIView):
         user = request.user
         serializer = UserSerializer(user)
         return Response(data=serializer.data, status=status.HTTP_200_OK)
+    
+# class UserForgotPasswordView(APIView):
+#     serializer_class = UserSerializer
+#     permission_classes = [permissions.AllowAny]
+
+#     @extend_schema(
+#         request=UserSerializer,
+#         responses={200: UserSerializer}
+#     )
+#     def post(self, request):
+
+#         serializer = UserSerializer(data=request.data)
+#         if serializer.is_valid():
+#             email = request.data.get('email')
+#             try:
+#                 user = User.objects.get(email=email)
+
+
+#                 # Generate token here
+#                 # Send email here
+            
+#                 # Here you would typically send a password reset email
+#                 return Response({"message": "Password reset instructions sent to your email."}, status=status.HTTP_200_OK)
+#             except User.DoesNotExist:
+#                 return Response({"error": "If an account exists, password reset instructions have been sent."}, status=status.HTTP_400_BAD_REQUEST)
+            
