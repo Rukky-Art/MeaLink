@@ -13,14 +13,14 @@ class Claim(models.Model):
 
     STATUS_CHOICES = [
         ('pending', 'Pending'),
-        ('picked up', 'Picked Up'),
+        ('picked_up', 'Picked Up'),
         ('distributed', 'Distributed'),
         ('cancelled', 'Cancelled'),
     ]
 
     food = models.ForeignKey(Food, on_delete=models.CASCADE, related_name='claims')
     claimer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='claims')
-    pickup_code = models.CharField(max_length=4, default=generate_pickup_code, unique=True)
+    pickup_code = models.CharField(max_length=4, default=generate_pickup_code)
     pickup_code_verified = models.BooleanField(default=False)  # set to True when code is verified during pickup
     pickup_time = models.DateTimeField(null=True, blank=True)   # set when code verified
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')

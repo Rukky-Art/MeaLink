@@ -1,5 +1,10 @@
+import secrets
+from django.utils import timezone
+from datetime import timedelta
+from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+
 
 # Create your models here.
 
@@ -64,7 +69,10 @@ class User(AbstractBaseUser, PermissionsMixin):
     address = models.CharField(max_length=255, blank=True, null=True)
     city = models.CharField(max_length=100)
     country = models.CharField(max_length=100)
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True,null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    is_verified = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
@@ -76,4 +84,35 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
-   
+
+def generate_token():
+        return secrets.token_urlsafe(32)  # generates a secure random token
+
+def default_expiry():
+    return timezone.now() + timedelta(hours=1)
+
+class EmailVerificationToken(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='email_verification_tokens')
+    token = models.CharField(max_length=64, unique=True, default=generate_token)  
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(default=default_expiry)
+    is_used = models.BooleanField(default=False)
+
+    def is_valid(self):
+        return not self.is_used and timezone.now() < self.expires_at
+
+    def __str__(self):
+        return f"Verification token for {self.user.email}"
+    
+class PasswordResetToken(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='password_reset_tokens')
+    token = models.CharField(max_length=64, unique=True, default=generate_token)  
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(default=default_expiry)
+    is_used = models.BooleanField(default=False)
+
+    def is_valid(self):
+        return not self.is_used and timezone.now() < self.expires_at
+
+    def __str__(self):
+        return f"Password reset token for {self.user.email}"

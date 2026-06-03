@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from claims.serializers import ClaimCreateSerializer, ClaimDetailSerializer, VerifyPickupCodeSerializer
+from claims.serializers import ClaimCreateSerializer, ClaimDetailSerializer, VerifyPickupCodeSerializer, ClaimDonorSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -31,30 +31,36 @@ class ClaimCreateView(APIView):
 
             if food.status != 'available':
                 return Response(data={"error": "Food listing is not available for claiming"}, status=status.HTTP_400_BAD_REQUEST)       
-            
 
-            serializer.save(claimer = request.user)# Set the user field to the current user when saving the claim
+            claim = serializer.save(claimer = request.user)# Set the user field to the current user when saving the claim
 
             #update food listing status back to claimed
             food.status = 'claimed'
             food.save()
-            return Response(data=serializer.data, status=status.HTTP_201_CREATED)
+            return Response(data=serializer(claim).data, status=status.HTTP_201_CREATED)
         else:
             return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @extend_schema(operation_id="list_claims")
     def get(self, request):
+
         #partners and receivers can see all their claims
-        if request.user.role == 'partner' or request.user.role == 'receiver':
+        if request.user.role == 'partner':
             claims = Claim.objects.filter(claimer=request.user)
+            serializer_class = ClaimDetailSerializer
 
         elif request.user.role == 'donor': #can see claims but not pickup code
             claims = Claim.objects.filter(food__posted_by=request.user)
+            serializer_class = ClaimDonorSerializer
 
         elif request.user.role == 'admin':
             claims = Claim.objects.all()
+            serializer_class = ClaimDetailSerializer
 
-        serializer = ClaimDetailSerializer(claims, many=True)
+        else:
+            return Response(data={"error": "Access denied"}, status=status.HTTP_403_FORBIDDEN)
+
+        serializer = serializer_class(claims, many=True)
         return Response(data=serializer.data, status=status.HTTP_200_OK)
 
 class ClaimDetailView(APIView):
@@ -124,13 +130,13 @@ class VerifyPickupCodeView(APIView):
         #check code matches
         pickup_code = serializer.validated_data['pickup_code']
         if pickup_code == claim.pickup_code:
-            claim.status = 'picked up'
+            claim.status = 'picked_up'
             claim.pickup_code_verified = True
             claim.pickup_time = timezone.now()
             claim.save()
 
             #update status of the food listing
-            claim.food.status = 'picked up'
+            claim.food.status = 'picked_up'
             claim.food.save()
 
             return Response(data={"message": "Pickup code verified successfully"}, status=status.HTTP_200_OK)
