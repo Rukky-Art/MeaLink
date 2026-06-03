@@ -6,6 +6,7 @@ from rest_framework import status
 from rest_framework import permissions
 
 from food.models import Food
+from food.utils import calculate_distance
 from drf_spectacular.utils import extend_schema
 
 # Create your views here.
@@ -52,6 +53,10 @@ class FoodListingsListView(APIView):
     @extend_schema(operation_id="list_all_food_listings")
     #all users apart from donors can see all available food listings
     def get(self, request):
+
+        user_latitude = request.query_params.get('latitude')
+        user_longitude = request.query_params.get('longitude')
+        
         # If user is not logged in → show all available listings
         if not request.user.is_authenticated:
             food_listings = Food.objects.filter(
@@ -62,14 +67,46 @@ class FoodListingsListView(APIView):
         elif request.user.role == 'partner':
             food_listings = Food.objects.filter(
                 status='available',
-                pickup_city=request.user.city
+                pickup_city=request.user.city    
             )
         elif request.user.role == 'admin':
             food_listings = Food.objects.all()
         else:
             return Response(data={"error": "Access denied"}, status=status.HTTP_403_FORBIDDEN)
+        
+        # If GPS coordinates provided, calculate distance and sort listings by proximity
+        if user_latitude and user_longitude:
+            listings_with_distance = []
 
-        serializer = self.serializer_class(food_listings, many=True)
+            for listing in food_listings:
+                if listing.pickup_latitude and listing.pickup_longitude:
+                    distance = calculate_distance(
+                        user_latitude, 
+                        user_longitude, 
+                        listing.pickup_latitude, 
+                        listing.pickup_longitude
+                    )
+                    listings_with_distance.append((listing, distance))
+
+                else:
+                    listings_with_distance.append((listing, 9999)) # No coordinates on listing — put at end
+
+            # Sort listings by distance, closest first
+            listings_with_distance.sort(key=lambda x: x[1] )
+            food_listings = [item[0] for item in listings_with_distance]
+
+            serializer = self.serializer_class(
+                food_listings, 
+                many=True, 
+                context={
+                    'request': request,
+                    'user_latitude': user_latitude,
+                    'user_longitude': user_longitude    
+                }
+            )
+        else:
+            serializer = self.serializer_class(food_listings, many=True)
+        
         return Response(data=serializer.data, status=status.HTTP_200_OK)
 
 class FoodListingsDetailView(APIView):
@@ -83,7 +120,16 @@ class FoodListingsDetailView(APIView):
         except Food.DoesNotExist:
             return Response(data={"error": "Food listing not found"}, status=status.HTTP_404_NOT_FOUND)
         
-        serializer = self.serializer_class(food_listing)
+        user_latitude = request.query_params.get('latitude')
+        user_longitude = request.query_params.get('longitude')
+        
+        serializer = self.serializer_class(
+            food_listing, 
+            context={
+                'request': request,
+                'user_latitude': user_latitude, 
+                'user_longitude': user_longitude
+                })
         return Response(data=serializer.data, status=status.HTTP_200_OK)
     
     #donors can update their food listing
