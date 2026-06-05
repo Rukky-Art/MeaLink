@@ -32,7 +32,7 @@ class DistributionCreateView(APIView):
                 return Response(data={"error": "You can only create distribution records for your own claims"}, status=status.HTTP_403_FORBIDDEN)
 
             # Make sure food was actually picked up first
-            if claim.status != 'picked up':
+            if claim.status != 'picked_up':
                 return Response(data={"error": "Food must be picked up before distributing."}, status=status.HTTP_400_BAD_REQUEST)
             
             # Make sure distribution hasn't already been recorded

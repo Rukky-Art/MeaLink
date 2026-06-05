@@ -19,17 +19,14 @@ class ClaimDetailSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'claimer', 'pickup_code', 'pickup_code_verified', 
                             'pickup_time', 'status', 'claim_time']
         
+        
 class VerifyPickupCodeSerializer(serializers.Serializer):
     # used when donor enters pickup code
     # Not a ModelSerializer because we're not creating anything
     pickup_code = serializers.CharField(max_length=4)
 
-# class ClaimDonorSerializer(serializers.ModelSerializer):
-#     # Donors see claims but NOT the pickup code
-#     class Meta:
-#         model = Claim
-#         fields = [
-#             'id', 'food', 'claimer',
-#             'status', 'claim_time', 'pickup_time'
-#             # pickup_code intentionally excluded 
-#         ]
+class ClaimDonorSerializer(serializers.ModelSerializer):
+    # Donors see claims but NOT the pickup code
+    class Meta:
+        model = Claim
+        fields = ['id', 'food', 'claimer', 'status', 'claim_time', 'pickup_time'] 
