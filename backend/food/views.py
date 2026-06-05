@@ -65,10 +65,14 @@ class FoodListingsListView(APIView):
         
         # If logged in partner, filter by their city
         elif request.user.role == 'partner':
-            food_listings = Food.objects.filter(
-                status='available',
-                pickup_city=request.user.city    
-            )
+            food_listings = Food.objects.filter(status='available')
+                # If partner has a city, filter by it
+                # But don't block if city is missing
+            if request.user.city:
+                food_listings = food_listings.filter(
+            pickup_city__iexact=request.user.city
+            )    
+            
         elif request.user.role == 'admin':
             food_listings = Food.objects.all()
         else:
@@ -86,13 +90,14 @@ class FoodListingsListView(APIView):
                         listing.pickup_latitude, 
                         listing.pickup_longitude
                     )
-                    listings_with_distance.append((listing, distance))
-
+                    # If calculate_distance returns None, put at end
+                    listings_with_distance.append((listing, distance if distance is not None else float('inf')))
                 else:
-                    listings_with_distance.append((listing, 9999)) # No coordinates on listing — put at end
-
-            # Sort listings by distance, closest first
-            listings_with_distance.sort(key=lambda x: x[1] )
+                    # No coordinates — put at end
+                    listings_with_distance.append((listing, float('inf')))
+                    
+            # Sort — float('inf') always goes to the end ✅
+            listings_with_distance.sort(key=lambda x: x[1])
             food_listings = [item[0] for item in listings_with_distance]
 
             serializer = self.serializer_class(
