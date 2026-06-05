@@ -30,9 +30,9 @@ class FoodListingsSerializer(serializers.ModelSerializer):
             return None
         
         distance = calculate_distance(
-            user_latitude,
-            user_longitude,
-            obj.pickup_latitude,
-            obj.pickup_longitude
+            float(user_latitude),
+            float(user_longitude),
+            float(obj.pickup_latitude),
+            float(obj.pickup_longitude)
         )
         return distance

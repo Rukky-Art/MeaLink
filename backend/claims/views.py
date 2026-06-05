@@ -1,5 +1,4 @@
 from django.shortcuts import render
-from claims.serializers import ClaimCreateSerializer, ClaimDetailSerializer, VerifyPickupCodeSerializer, ClaimDonorSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -8,6 +7,13 @@ from rest_framework import permissions
 from claims.models import Claim
 from drf_spectacular.utils import extend_schema
 from django.utils import timezone
+
+from claims.serializers import (
+    ClaimCreateSerializer, 
+    ClaimDetailSerializer, 
+    VerifyPickupCodeSerializer, 
+    ClaimDonorSerializer
+)
 
 # Create your views here.
 
@@ -21,8 +27,8 @@ class ClaimCreateView(APIView):
     #claim a food listing
     def post(self, request):
         #check permission first
-        if request.user.role != 'partner' and request.user.role != 'receiver':
-            return Response(data={"error": "Only partners and receivers can claim food listings"}, status=status.HTTP_403_FORBIDDEN)
+        if request.user.role != 'partner':
+            return Response(data={"error": "Only partners can claim food listings"}, status=status.HTTP_403_FORBIDDEN)
 
         serializer = self.serializer_class(data = request.data)
         if serializer.is_valid():
@@ -30,31 +36,39 @@ class ClaimCreateView(APIView):
             food = serializer.validated_data['food']
 
             if food.status != 'available':
-                return Response(data={"error": "Food listing is not available for claiming"}, status=status.HTTP_400_BAD_REQUEST)       
+                return Response(data={"error": "Food listing is not available for claiming"}, status=status.HTTP_400_BAD_REQUEST)   
+
+            # Prevent partner from claiming their own food
+            if food.posted_by == request.user:
+                return Response(
+                    {"error": "You cannot claim your own food listing"},
+                    status=status.HTTP_403_FORBIDDEN
+                )    
 
             claim = serializer.save(claimer = request.user)# Set the user field to the current user when saving the claim
 
             #update food listing status back to claimed
             food.status = 'claimed'
             food.save()
-            return Response(data=serializer(claim).data, status=status.HTTP_201_CREATED)
+
+            return Response(data=ClaimDetailSerializer(claim).data, status=status.HTTP_201_CREATED)
         else:
             return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @extend_schema(operation_id="list_claims")
     def get(self, request):
 
-        #partners and receivers can see all their claims
+        #partners and receivers can see all their claims with pick up code
         if request.user.role == 'partner':
-            claims = Claim.objects.filter(claimer=request.user)
+            claims = Claim.objects.filter(claimer=request.user).select_related('food', 'food__posted_by', 'claimer')
             serializer_class = ClaimDetailSerializer
 
         elif request.user.role == 'donor': #can see claims but not pickup code
-            claims = Claim.objects.filter(food__posted_by=request.user)
+            claims = Claim.objects.filter(food__posted_by=request.user).select_related('food', 'food__posted_by', 'claimer')
             serializer_class = ClaimDonorSerializer
 
         elif request.user.role == 'admin':
-            claims = Claim.objects.all()
+            claims = Claim.objects.all().select_related('food', 'food__posted_by', 'claimer')
             serializer_class = ClaimDetailSerializer
 
         else:
