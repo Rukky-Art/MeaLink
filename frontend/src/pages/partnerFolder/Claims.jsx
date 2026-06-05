@@ -262,7 +262,7 @@ import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { ChevronLeft, ShieldCheck, MapPin, Package, X, User,} from 'lucide-react';
 import { useNavigate } from 'react-router';
-import { fetchMyClaims } from '../store/slices/partnerSlice';
+import { fetchMyClaims } from '../../store/slices/partnerSlice';
 
 const STATUS_COLORS = {
   claimed:     'bg-blue-100 text-blue-700',

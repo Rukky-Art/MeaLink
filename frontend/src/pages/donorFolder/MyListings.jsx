@@ -132,7 +132,7 @@ const MyListings = () => {
                       </td>
                       <td className="px-6 py-5 text-right">
                         <button
-                          onClick={() => navigate(`/listings/${listing.id}`)}
+                          onClick={() => navigate(`/dashboard/listings/${listing.id}`)}
                           className="px-4 py-1.5 text-sm font-medium border border-gray-200 hover:bg-gray-50 rounded-xl transition-colors"
                         >
                           View

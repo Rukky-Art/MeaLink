@@ -1,6 +1,6 @@
 import { useSelector } from 'react-redux';
 import DonorDashboard from './donorFolder/DonorDashboard';
-import PartnerDashboard from './PartnerDashboard';
+import PartnerDashboard from './partnerFolder/PartnerDashboard';
 
 const DashboardHome = () => {
   const { user } = useSelector((state) => state.auth);
