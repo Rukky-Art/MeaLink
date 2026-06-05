@@ -6,17 +6,21 @@ import {
   ArrowLeft, User, Phone, AlertCircle, ShieldCheck, Info
 } from 'lucide-react';
 import { fetchAvailableFood, fetchMyClaims, claimFood } from '../../store/slices/partnerSlice';
+import {selectVisibleFood, selectMyClaims, selectIsLoading, selectIsActionLoading} from '../../store/slices/partnerSlice';
 
 const AvailableFood = () => {
   const { id }   = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
-  const { availableFood, myClaims, loading, claimLoading } = useSelector((state) => state.partner);
 
   const [claimError,   setClaimError]   = useState('');
   const [claimSuccess, setClaimSuccess] = useState(false);
 
+const availableFood = useSelector(selectVisibleFood);
+  const myClaims = useSelector(selectMyClaims);
+  const loading = useSelector(selectIsLoading);
+  const claimLoading = useSelector(selectIsActionLoading);
   useEffect(() => {
     dispatch(fetchAvailableFood());
     dispatch(fetchMyClaims());

@@ -5,13 +5,6 @@ import { ArrowLeft,  AlertCircle, CheckCircle } from 'lucide-react';
 import { verifyPickup } from '../../store/slices/partnerSlice';
 import DonationJourney from '../../components/DonationJourney';
 
-// ── ConfirmPickup — Step 1 of the post-claim flow ─────────────────────────────
-// Route: /dashboard/claims/:claimId/confirm-pickup
-//
-// The partner sees their pickup code (from the claim object).
-// They show it to the donor. Donor confirms it matches.
-// Partner checks the confirmation checkbox then hits "Confirm pickup"
-// which calls POST /api/claims/:id/verify-pickup-code/
 
 const ConfirmPickup = () => {
   const { claimId } = useParams();
@@ -30,12 +23,20 @@ const ConfirmPickup = () => {
   const [success,    setSuccess]    = useState(false);
 
   // food details might be nested or flat depending on your backend
-  const food = claim?.food_details || claim?.food_data || null;
-  const foodName  = food?.food_type  || claim?.food_type  || `Claim #${claimId}`;
-  const quantity  = food?.quantity_estimated || claim?.quantity_estimated || '—';
-  const unit      = food?.quantity_unit      || claim?.quantity_unit      || '';
-  const donor     = food?.donor_name         || claim?.donor_name         || '—';
-  const location  = food?.pickup_address     || claim?.pickup_address     || '—';
+  // const food = claim?.food_details || claim?.food_data || null;
+  // const foodName = food?.food_type || `Claim #${claimId}`;
+  // const quantity  = food?.quantity_estimated || claim?.quantity_estimated || '—';
+  // const unit      = food?.quantity_unit  || '';
+  // const donor = claim?.donor?.name || '—';
+  // const location  = food?.pickup_address  || 'location not specified';
+const food = claim?.food || null;
+
+const foodName = food?.food_type || `Claim #${claimId}`;
+const quantity = food?.quantity_estimated || '—';
+const unit = food?.quantity_unit || '';
+const donor = claim?.donor?.name || '—';
+const location = food?.pickup_address || 'Location not specified';
+
 
   const handleConfirmPickup = async () => {
     if (!confirmed) return;

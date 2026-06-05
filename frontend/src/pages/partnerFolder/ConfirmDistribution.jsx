@@ -21,7 +21,6 @@ const ConfirmDistribution = () => {
   const food     = claim?.food_details || claim?.food_data || null;
   const foodName = food?.food_type  || claim?.food_type  || `Claim #${claimId}`;
   const donor    = food?.donor_name || claim?.donor_name || '—';
-  const foodId   = food?.id         || claim?.food       || null;
 
   const [beneficiaries, setBeneficiaries] = useState('');
   const [notes,         setNotes]         = useState('');
@@ -37,12 +36,11 @@ const ConfirmDistribution = () => {
     setError('');
     setSubmitting(true);
 
-    const result = await dispatch(recordDistribution({
-      claim:                Number(claimId),
-      food:                 foodId,
-      number_of_recipients: Number(beneficiaries),
-      notes:                notes || undefined,
-    }));
+   const result = await dispatch(recordDistribution({
+  claim: Number(claimId),
+  recipients_count: Number(beneficiaries),
+  notes: notes || null,
+}));
 
     setSubmitting(false);
 

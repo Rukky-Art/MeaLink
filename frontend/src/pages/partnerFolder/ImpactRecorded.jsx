@@ -13,16 +13,41 @@ const ImpactRecorded = () => {
   const { myClaims } = useSelector((state) => state.partner);
   const { user }     = useSelector((state) => state.auth);
 
-  const claim = myClaims.find(c => c.id === Number(claimId));
-  const food  = claim?.food_details || claim?.food_data || null;
+const claim = myClaims.find(
+  c => c.id === Number(claimId)
+);
 
-  const foodName   = food?.food_type          || claim?.food_type          || `Claim #${claimId}`;
-  const donor      = food?.donor_name         || claim?.donor_name         || '—';
-  const quantity   = food?.quantity_estimated || claim?.quantity_estimated || '—';
-  const unit       = food?.quantity_unit      || claim?.quantity_unit      || '';
-  const address    = food?.pickup_address     || claim?.pickup_address     || '—';
-  const claimTime  = claim?.claim_time        ? new Date(claim.claim_time).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
-  const recipients = claim?.distribution?.number_of_recipients || '—';
+const food = claim?.food || null;
+
+const foodName =
+  food?.food_type || `Claim #${claimId}`;
+
+const donor =
+  claim?.donor?.name || '—';
+
+const quantity =
+  food?.quantity_estimated || '—';
+
+const unit =
+  food?.quantity_unit || '';
+
+const address =
+  food?.pickup_address || '—';
+
+const claimTime =
+  claim?.claim_time
+    ? new Date(claim.claim_time).toLocaleDateString(
+        'en-NG',
+        {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+        }
+      )
+    : '—';
+
+const recipients =
+  claim?.distribution?.recipients_count || '—';
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] p-4 md:p-8 font-be-vietnam">

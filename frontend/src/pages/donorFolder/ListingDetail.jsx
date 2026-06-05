@@ -6,71 +6,81 @@ import {
   CheckCircle, Lock, AlertCircle, Info, ShieldCheck
 } from 'lucide-react';
 import { fetchMyListings } from '../../store/slices/foodSlice';
-import api from '../../auth/api';
 import DonationJourney from '../../components/DonationJourney';
+import {verifyPickup, fetchMyClaims} from '../../store/slices/partnerSlice';
 
-// ── ListingDetail — Donor's view of a single food listing ────────────────────
-// Route: /dashboard/listings/:id
-//
-// Status-driven code verification panel:
-//   available   → code box hidden, listing info only
-//   claimed     → code input active, donor enters partner's code to verify
-//   picked_up   → code box frozen (already verified), full journey shown
-//   distributed → code box frozen, full journey shown
-//   expired     → show expired state
+
 
 const ListingDetail = () => {
   const { id }    = useParams();
   const navigate  = useNavigate();
   const dispatch  = useDispatch();
 
-  const { myListings, loading } = useSelector((state) => state.food);
+const { myListings = [] } = useSelector((state) => state.food);
+ const {
+  myClaims = [],
+  isLoading: partnerLoading,
+} = useSelector((state) => state.partner);
 
-  const [code,        setCode]        = useState('');
-  const [verifying,   setVerifying]   = useState(false);
+  const [code, setCode] = useState('');
+  const [verifying, setVerifying] = useState(false);
   const [verifyError, setVerifyError] = useState('');
   const [verifySuccess, setVerifySuccess] = useState(false);
 
-  useEffect(() => {
-    dispatch(fetchMyListings());
-  }, [dispatch]);
+useEffect(() => {
+  dispatch(fetchMyListings());
+  dispatch(fetchMyClaims());
+}, [dispatch]);
 
+  // 3. Extract the current listing info
   const listing = myListings.find(l => l.id === Number(id));
 
-  // ── Derive the claim associated with this listing ─────────────────────────
-  // The listing object from /food/my-listings/ may include claim info.
-  // Adjust field names to match what your backend actually returns.
-  const claimId        = listing?.claim_id || listing?.claim?.id || null;
-  const pickupVerified = listing?.pickup_code_verified || listing?.claim?.pickup_code_verified || false;
+  // 4. CROSS-REFERENCE: Find the matching claim object from your claims pool
+ const matchingClaim = myClaims.find(
+  c => c.food?.id === Number(id)
+);
 
-  const handleVerify = async () => {
+  // 5. Safely pull your real claim id string ("11")
+  const claimId = matchingClaim?.id || null;
+  // const pickupVerified = matchingClaim?.pickup_code|| false;
+  const pickupVerified =
+  matchingClaim?.pickup_code_verified || false;
+
+const handleVerify = async () => {
+    if (!claimId) {
+      setVerifyError('No active claim record found matching this listing ID.');
+      return;
+    }
     if (!code.trim() || code.trim().length !== 4) {
       setVerifyError('Please enter the 4-character code shown by the partner.');
       return;
     }
+
     setVerifyError('');
     setVerifying(true);
 
-    try {
-      // Donor hits the same verify endpoint — backend matches codes from both ends
-      await api.post(`claims/${claimId}/verify-pickup-code/`, {
-        pickup_code: code.trim().toUpperCase(),
-      });
+    // 6. Execute verification against your target endpoint
+   const resultAction = await dispatch(
+  verifyPickup({
+    claimId,
+    code: code.trim().toUpperCase(),
+  })
+);
+
+    setVerifying(false);
+
+    if (verifyPickup.fulfilled.match(resultAction)) {
       setVerifySuccess(true);
-      // Refetch listings so the status updates across the UI
+      // Re-fetch both data channels to sync UI badges immediately
       dispatch(fetchMyListings());
-    } catch (err) {
-      const p = err.response?.data;
-      setVerifyError(
-        p?.detail || p?.error || p?.pickup_code?.[0] || 'Code verification failed. Please check the code and try again.'
-      );
-    } finally {
-      setVerifying(false);
+      dispatch(fetchMyClaims());
+    } else {
+      setVerifyError(resultAction.payload || 'Code verification failed. Please try again.');
     }
   };
 
   // ── Loading / not found states ────────────────────────────────────────────
-  if (loading && !listing) {
+  if (partnerLoading && !listing) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="flex flex-col items-center gap-3">
@@ -90,7 +100,7 @@ const ListingDetail = () => {
         <div className="text-center">
           <p className="text-red-500 font-bold mb-4">Listing not found.</p>
           <button onClick={() => navigate('/dashboard/my-listings')} className="text-brand-green font-bold underline">
-            Back to My Listings
+            Back to My Listingsnn
           </button>
         </div>
       </div>
