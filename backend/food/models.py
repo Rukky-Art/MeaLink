@@ -15,7 +15,7 @@ class Food(models.Model):
     STATUS_CHOICES = [
         ('available', 'Available'),
         ('claimed', 'Claimed'),
-        ('picked up', 'Picked Up'),
+        ('picked_up', 'Picked Up'),
         ('distributed', 'Distributed'),
         ('expired', 'Expired'),
     ]
@@ -32,7 +32,9 @@ class Food(models.Model):
     contact_person_name = models.CharField(max_length=255, blank=True, null=True)
     contact_person_phone = models.CharField(max_length=20, blank=True, null=True)
     pickup_address = models.CharField(max_length=255)
-    pickup_city = models.CharField(max_length=100) 
+    pickup_city = models.CharField(max_length=100)
+    pickup_longitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
+    pickup_latitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='available')
     created_at = models.DateTimeField(auto_now_add=True)

@@ -10,9 +10,9 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'id', 'email', 'name', 'phone_number', 'role', 'business_registration_number', 'organisation_type',
-            'address', 'city', 'country', 'password', 'created_at'
+            'address', 'city', 'country', 'latitude', 'longitude', 'password', 'created_at', 'is_verified'
         ]
-        read_only_fields = ['id', 'created_at']
+        read_only_fields = ['id', 'created_at', 'is_verified']
 
     #donors must have organisation type
     def validate(self, data):
@@ -54,6 +54,22 @@ class UserSerializer(serializers.ModelSerializer):
             address=validated_data.get('address', None),
             city=validated_data['city'],
             country=validated_data['country'],
+            latitude=validated_data.get('latitude', None),
+            longitude=validated_data.get('longitude', None)
         )
         return user
+    
+
+class ForgotPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    class Meta:
+        fields = ['email']
+
+class ResetPasswordSerializer(serializers.Serializer):
+    token = serializers.CharField()
+    new_password = serializers.CharField(min_length=8)
+
+    class Meta:
+        fields = ['token', 'new_password']
         

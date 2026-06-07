@@ -63,19 +63,19 @@ const DONOR_TYPES = [
 ];
 
 const PARTNER_TYPES = [
-  { value: 'food_bank',              label: 'Food Bank'              },
+  { value: 'Food Bank',              label: 'Food Bank'              },
   { value: 'ngo',                    label: 'NGO'                    },
-  { value: 'religious_organization', label: 'Religious Organization' },
+  { value: 'Religious Organization', label: 'Religious Organization' },
   { value: 'shelter',                label: 'Shelter'                },
-  { value: 'community_coordinator',  label: 'Community Coordinator'  },
-  { value: 'local_volunteer_group',  label: 'Local Volunteer Group'  },
+  { value: 'Community Coordinator',  label: 'Community Coordinator'  },
+  { value: 'local Volunteer Group',  label: 'Local Volunteer Group'  },
   { value: 'other',                  label: 'Other'                  },
 ];
 
 const COUNTRIES = [
   { value: 'Nigeria',  label: 'Nigeria'  },
   { value: 'Cameroon', label: 'Cameroon' },
-  { value: 'Libya',    label: 'Libya'    },
+  { value: 'Liberia',    label: 'Liberia'    },
   { value: 'Kenya',    label: 'Kenya'    },
   { value: 'Sudan',    label: 'Sudan'    },
 ];
@@ -85,7 +85,7 @@ const getRegPlaceholder = (country) => {
     case 'nigeria':  return 'e.g. RC123456 or IT78910';
     case 'cameroon': return 'e.g. RC/XXX/YYYY';
     case 'kenya':    return 'e.g. PVT-L7U9X2';
-    case 'libya':    return 'e.g. COM-123456';
+    case 'liberia':    return 'e.g. COM-123456';
     case 'sudan':    return 'e.g. REG-123456';
     default:         return 'e.g. RC / IT / BN Number';
   }
