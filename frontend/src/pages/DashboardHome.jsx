@@ -1,5 +1,6 @@
 import { useSelector } from 'react-redux';
 import DonorDashboard from './donorFolder/DonorDashboard';
+import AdminDashboard from './adminFolder/AdminDashboard';
 import PartnerDashboard from './partnerFolder/PartnerDashboard';
 
 const DashboardHome = () => {
@@ -13,7 +14,7 @@ switch (user?.role) {
     case 'receiver':
       return <div className="p-8 text-center">Receiver Dashboard coming soon!</div>;
     case 'admin':
-      return <div className="p-8 text-center">Welcome, Admin.</div>;
+      return <AdminDashboard />;
     default:
       return <div className="p-8 text-center text-red-500">Unauthorized role or data error.</div>;
   }
