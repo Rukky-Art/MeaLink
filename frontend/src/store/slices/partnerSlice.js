@@ -472,22 +472,47 @@ const partnerSlice = createSlice({
         state.isActionLoading = true;
         state.actionError     = null;
       })
+      // .addCase(cancelClaim.fulfilled, (state, action) => {
+      //   state.isActionLoading = false;
+      //   const targetClaim = state.myClaims.find(c => c.id === action.payload.claimId);
+      //   const foodId = targetClaim
+      //     ? (targetClaim.food?.id ?? targetClaim.food)
+      //     : null;
+      //   // Mark as cancelled — keep in list for history
+      //   state.myClaims = state.myClaims.map(c =>
+      //     c.id === action.payload.claimId ? { ...c, status: 'cancelled' } : c
+      //   );
+      //   // Release food back to available
+      //   if (foodId) {
+      //     const foodItem = state.availableFood.find(f => f.id === foodId);
+      //     if (foodItem) foodItem.is_claimed = false;
+      //   }
+      // })
       .addCase(cancelClaim.fulfilled, (state, action) => {
-        state.isActionLoading = false;
-        const targetClaim = state.myClaims.find(c => c.id === action.payload.claimId);
-        const foodId = targetClaim
-          ? (targetClaim.food?.id ?? targetClaim.food)
-          : null;
-        // Mark as cancelled — keep in list for history
-        state.myClaims = state.myClaims.map(c =>
-          c.id === action.payload.claimId ? { ...c, status: 'cancelled' } : c
-        );
-        // Release food back to available
-        if (foodId) {
-          const foodItem = state.availableFood.find(f => f.id === foodId);
-          if (foodItem) foodItem.is_claimed = false;
-        }
-      })
+  state.isActionLoading = false;
+  
+  // 1. Extract the claim ID directly from action.payload.id
+  const canceledClaimId = action.payload?.id;
+  
+  // 2. Extract the nested food ID safely from action.payload.food.id
+  const foodId = action.payload?.food?.id || action.payload?.food;
+
+  // 3. Update the claim status in your history list
+  if (canceledClaimId) {
+    state.myClaims = state.myClaims.map(c =>
+      c.id === canceledClaimId ? { ...c, status: 'cancelled' } : c
+    );
+  }
+
+  // 4. Immutably release the food back to "Available" 
+  if (foodId) {
+    state.availableFood = state.availableFood.map(food => 
+      Number(food.id) === Number(foodId) 
+        ? { ...food, is_claimed: false } 
+        : food
+    );
+  }
+})
       .addCase(cancelClaim.rejected, (state, action) => {
         state.isActionLoading = false;
         state.actionError     = action.payload;

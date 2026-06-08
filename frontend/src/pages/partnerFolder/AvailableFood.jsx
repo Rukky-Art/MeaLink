@@ -35,9 +35,16 @@ const availableFood = useSelector(selectVisibleFood);
     ? availableFood.find(f => f.id === Number(id)) || null
     : null;
 
-  const isClaimedByMe = selectedFood
-    ? myClaims.some(c => c.food === selectedFood.id || c.food?.id === selectedFood.id)
-    : false;
+const isClaimedByMe = selectedFood && myClaims.length > 0
+  ? myClaims.some(c => {
+      // 1. If it's a cancelled claim, don't let it mark the food as "claimed by me"
+      if (c.status === 'cancelled') return false; 
+      
+      // 2. Extract the food ID out of the object safely
+      const claimFoodId = typeof c.food === 'object' ? c.food?.id : c.food;
+      return claimFoodId && Number(claimFoodId) === Number(selectedFood.id);
+    })
+  : false;
 
   const isClaimedByOthers = selectedFood?.is_claimed && !isClaimedByMe;
 
@@ -265,16 +272,23 @@ const availableFood = useSelector(selectVisibleFood);
           [...Array(6)].map((_, i) => <SkeletonCard key={i} />)
         ) : availableFood.length > 0 ? (
           availableFood.map((food) => {
-            const isMyClaim = myClaims.some(c => c.food === food.id || c.food?.id === food.id);
-            return (
-              <FoodCard
-                key={food.id}
-                food={food}
-                isMyClaim={isMyClaim}
-                onView={() => navigate(`/dashboard/browse/${food.id}`)}
-              />
-            );
-          })
+  // Check if this specific food is attached to any active (non-cancelled) claim of yours
+  const isMyClaim = myClaims.some(c => {
+    if (c.status === 'cancelled') return false;
+    
+    const claimFoodId = typeof c.food === 'object' ? c.food?.id : c.food;
+    return claimFoodId && Number(claimFoodId) === Number(food.id);
+  });
+
+  return (
+    <FoodCard
+      key={food.id}
+      food={food}
+      isMyClaim={isMyClaim}
+      onView={() => navigate(`/dashboard/browse/${food.id}`)}
+    />
+  );
+})
         ) : (
           <div className="col-span-full bg-white rounded-[32px] p-20 text-center border border-dashed border-gray-200">
             <ShoppingBag size={48} className="mx-auto text-gray-300 mb-4" />
