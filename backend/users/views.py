@@ -30,23 +30,23 @@ class UserRegistrationView(APIView):
         if serializer.is_valid():
             user = serializer.save()
 
-            #Auto login
-            refresh = RefreshToken.for_user(user)
+            # #Auto login
+            # refresh = RefreshToken.for_user(user)
 
-            # Create verification token
-            EmailVerificationToken.objects.filter(
-                user=user,
-                is_used=False,
-            ).delete()
-            verify_token = EmailVerificationToken.objects.create(user=user)
+            # # Create verification token
+            # EmailVerificationToken.objects.filter(
+            #     user=user,
+            #     is_used=False,
+            # ).delete()
+            # verify_token = EmailVerificationToken.objects.create(user=user)
 
-            # Send email — no request needed
-            send_verification_email(user, verify_token.token)
+            # # Send email — no request needed
+            # send_verification_email(user, verify_token.token)
 
             return Response({
                 'user': UserSerializer(user).data,
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
+                # 'refresh': str(refresh),
+                # 'access': str(refresh.access_token),
                 'message': 'Registration successful. Please check your email.'
             }, status=status.HTTP_201_CREATED)
 
