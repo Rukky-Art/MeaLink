@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
+from users.utils import normalize_phone
 
 User = get_user_model()
 
@@ -9,7 +10,8 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            'id', 'email', 'name', 'phone_number', 'role', 'business_registration_number', 'organisation_type',
+            'id', 'email', 'name', 'phone_number', 'role', 
+            'business_name', 'business_registration_number', 'organisation_type',
             'address', 'city', 'country', 'latitude', 'longitude', 'password', 'created_at', 'is_verified'
         ]
         read_only_fields = ['id', 'created_at', 'is_verified']
@@ -41,6 +43,14 @@ class UserSerializer(serializers.ModelSerializer):
 
         return data
 
+    def validate_phone_number(self, value):
+        try:
+            return normalize_phone(value)
+        except Exception:
+            raise serializers.ValidationError(
+                "Enter a valid phone number."
+            )
+        
 
     def create(self, validated_data):
         user = User.objects.create_user( #calls custom user manager's create_user method 
@@ -49,6 +59,7 @@ class UserSerializer(serializers.ModelSerializer):
             name=validated_data['name'],
             phone_number=validated_data.get('phone_number', None),
             role=validated_data['role'],
+            business_name=validated_data['business_name'],
             business_registration_number=validated_data.get('business_registration_number', None),
             organisation_type=validated_data.get('organisation_type', None),
             address=validated_data.get('address', None),

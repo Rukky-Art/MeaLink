@@ -26,3 +26,4 @@ def calculate_distance(lat1, lon1, lat2, lon2):
     except (TypeError, ValueError) as e:
         print(f"Error calculating distance: {e}")
         return None  # return None if coordinates are invalid
+

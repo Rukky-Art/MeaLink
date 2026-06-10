@@ -21,6 +21,8 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
+from food.ussd import ussd_handler
+from users.whatsapp import send_whatsapp_message
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -35,4 +37,7 @@ urlpatterns = [
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/v1/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('api/v2/docs/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
+
+    path('api/ussd/', ussd_handler, name='ussd'),
+    path('api/whatsapp/', send_whatsapp_message, name='whatsapp'),
 ]
