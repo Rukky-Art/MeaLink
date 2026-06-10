@@ -83,7 +83,7 @@ _MeaLink — Share More. Waste Less._""" #click this link to verify pickupcode o
                     f"""✅ *MeaLink — Claim Confirmed!*
             
 
-You have claimed *{food.food_type} - {food.quantity_estimated} {food.quanity_unit}*.
+You have claimed *{food.food_type} - {food.quantity_estimated} {food.quantity_unit}*.
 
 *Donor:* {donor.name}
 *Pickup address:* {food.pickup_address}

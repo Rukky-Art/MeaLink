@@ -23,6 +23,8 @@ from rest_framework_simplejwt.views import (
 )
 from food.ussd import ussd_handler
 from users.whatsapp import send_whatsapp_message
+from users.sms import send_sms
+from django.conf import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -39,5 +41,5 @@ urlpatterns = [
     path('api/v2/docs/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 
     path('api/ussd/', ussd_handler, name='ussd'),
-    path('api/whatsapp/', send_whatsapp_message, name='whatsapp'),
+    path('api/whatsapp/', send_whatsapp_message, name='whatsapp')
 ]
