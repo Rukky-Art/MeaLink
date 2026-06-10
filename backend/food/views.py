@@ -7,7 +7,13 @@ from rest_framework import permissions
 
 from food.models import Food
 from food.utils import calculate_distance
+from users.sms import send_sms
 from drf_spectacular.utils import extend_schema
+from users.utils import normalize_phone
+from users.whatsapp import send_whatsapp_message
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 # Create your views here.
 
@@ -40,8 +46,45 @@ class FoodListingsCreateView(APIView):
             data=data, 
             context={'request': request}  # ← needed for full image URL generation
         )
+
         if serializer.is_valid():
-            serializer.save(posted_by=posted_by)# Set the user field to the current user when saving the todo
+            food = serializer.save(posted_by=posted_by)# Set the user field to the current user when saving the todo
+
+            partners = User.objects.filter(
+                role='partner',
+                city__iexact=food.pickup_city,
+                is_active=True,
+                phone_number__isnull=False
+            ).exclude(phone_number='')
+            
+            for partner in partners:
+                send_sms(
+                    partner.phone_number,
+                    f"MeaLink: New food in {food.pickup_city}! "
+                    f"{food.food_type} ({food.quantity_estimated} {food.quantity_unit}) "
+                    f"available until {food.pickup_end_time.strftime('%H:%M')}. "
+                    f"Listing ID: {food.id}. "
+                    f"Dial *384*12347# to claim."
+                )
+
+            for partner in partners:
+                send_whatsapp_message(
+                    partner.phone_number,
+                    f"""🔔 *MealLink — New Food Available Near You!*
+
+*{food.food_type}* is available in *{food.pickup_city}*.
+
+*Quantity:* {food.quantity_estimated} {food.quantity_unit}
+*Category:* {food.category}
+*Pickup address:* {food.pickup_address}
+*Available until:* {food.pickup_end_time.strftime('%H:%M on %d %b')}
+
+Open the MealLink app to claim it before 
+someone else does! ⏰
+
+_MealLink — Share More. Waste Less._"""
+            )
+         
             return Response(data=serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)

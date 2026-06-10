@@ -64,6 +64,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     name = models.CharField(max_length=255)
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)  # 'donor' or 'receiver' or 'admin'
+    business_name = models.CharField(max_length=255)  #for donors and partners
     business_registration_number = models.CharField(max_length=100, blank=True, null=True)  #for donors and partners
     organisation_type = models.CharField(max_length=225, choices=DONOR_TYPE_CHOICES + PARTNER_TYPE_CHOICES, blank=True, null=True)  #only for donors
     address = models.CharField(max_length=255, blank=True, null=True)

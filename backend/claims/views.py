@@ -7,6 +7,7 @@ from rest_framework import permissions
 from claims.models import Claim
 from drf_spectacular.utils import extend_schema
 from django.utils import timezone
+from users.whatsapp import send_whatsapp_message
 
 from claims.serializers import (
     ClaimCreateSerializer, 
@@ -14,6 +15,10 @@ from claims.serializers import (
     VerifyPickupCodeSerializer, 
     ClaimDonorSerializer
 )
+
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 # Create your views here.
 
@@ -50,6 +55,48 @@ class ClaimCreateView(APIView):
             #update food listing status back to claimed
             food.status = 'claimed'
             food.save()
+
+            donor = food.posted_by
+            partner = request.user
+
+            # WhatsApp to DONOR — food has been claimed
+            if donor.phone_number:
+                send_whatsapp_message(
+                    donor.phone_number,
+                    f"""🎉 *MeaLink — Food Claimed!*
+
+Your listing *{food.food_type} - {food.quantity_estimated} {food.quanity_unit}* has been claimed.
+
+*Claimed by:* {partner.name}
+*Organisation:* {partner.organisation_type}.
+
+When the partner arrives, verify their code in the app.
+Give the food ONLY when the code matches. ✅
+
+_MeaLink — Share More. Waste Less._""" #click this link to verify pickupcode or scan qr code
+            )
+
+            # WhatsApp to PARTNER — pickup code
+            if partner.phone_number:
+                send_whatsapp_message(
+                    partner.phone_number,
+                    f"""✅ *MeaLink — Claim Confirmed!*
+            
+
+You have claimed *{food.food_type} - {food.quantity_estimated} {food.quanity_unit}*.
+
+*Donor:* {donor.name}
+*Pickup address:* {food.pickup_address}
+*Pickup window:* until {food.pickup_end_time.strftime('%H:%M on %d %b')}
+*Contact:* {food.contact_person_name} — {food.contact_person_phone}
+
+*YOUR PICKUP CODE: `{claim.pickup_code}`*
+
+Show this code to the donor when you arrive.
+They will verify it to release the food. 🍱
+
+_MeaLink — Share More. Waste Less._"""
+            )
 
             return Response(data=ClaimDetailSerializer(claim).data, status=status.HTTP_201_CREATED)
         else:
@@ -152,6 +199,41 @@ class VerifyPickupCodeView(APIView):
             #update status of the food listing
             claim.food.status = 'picked_up'
             claim.food.save()
+
+            donor = claim.food.posted_by
+            partner = claim.claimer
+
+            # WhatsApp to DONOR — pickup confirmed
+            if donor.phone_number:
+                send_whatsapp_message(
+                    donor.phone_number,
+                    f"""✅ *MeaLink — Pickup Confirmed!*
+
+*{claim.food.food_type}* has been successfully 
+collected by *{partner.name}*.
+
+The food is now on its way to those who need it.
+Thank you for reducing food waste! 🌍
+
+_MealLink — Share More. Waste Less._"""
+        )
+                
+        # WhatsApp to PARTNER — remind to log distribution
+        if partner.phone_number:
+            send_whatsapp_message(
+                partner.phone_number,
+                f"""🍱 *MealLink — Pickup Complete!*
+
+Pickup of *{claim.food.food_type}* confirmed.
+
+*Please remember:* Once you have distributed 
+the food, log your impact in the MeaLink app.
+
+This helps donors see the difference 
+they are making. 💚
+
+_MealLink — Share More. Waste Less._"""
+        )
 
             return Response(data={"message": "Pickup code verified successfully"}, status=status.HTTP_200_OK)
         else:
