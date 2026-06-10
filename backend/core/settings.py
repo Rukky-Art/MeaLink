@@ -198,9 +198,9 @@ FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:5176')
 
 CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', '').split(',')
 
-#USSD Configuration
-USSD_API_KEY = os.getenv('USSD_API_KEY')
-USSD_USERNAME = os.getenv('USSD_USERNAME')
+#AT Configuration
+AT_API_KEY = os.getenv('AT_API_KEY')
+AT_USERNAME = os.getenv('AT_USERNAME')
 
 #TWILIO Configuration
 TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID')

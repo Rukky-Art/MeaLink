@@ -23,7 +23,6 @@ from rest_framework_simplejwt.views import (
 )
 from food.ussd import ussd_handler
 from users.whatsapp import send_whatsapp_message
-from users.sms import send_sms
 from django.conf import settings
 
 urlpatterns = [
