@@ -80,9 +80,12 @@ someone else does! ⏰
 _MealLink — Share More. Waste Less._"""
             
             for partner in partners:
-                phone = normalize_phone(partner.phone_number)
-                send_sms(phone, sms_message)
-                send_whatsapp_message(phone, whatsapp_message)
+                try:
+                    phone = normalize_phone(partner.phone_number)
+                    send_sms(phone, sms_message)
+                    send_whatsapp_message(phone, whatsapp_message)
+                except Exception as e:
+                    print("NOTIFICATION ERROR:", e)
          
             return Response(data=serializer.data, status=status.HTTP_201_CREATED)
         else:
