@@ -56,21 +56,16 @@ class FoodListingsCreateView(APIView):
                 is_active=True,
                 phone_number__isnull=False
             ).exclude(phone_number='')
-            
-            for partner in partners:
-                send_sms(
-                    partner.phone_number,
-                    f"MeaLink: New food in {food.pickup_city}! "
-                    f"{food.food_type} ({food.quantity_estimated} {food.quantity_unit}) "
-                    f"available until {food.pickup_end_time.strftime('%H:%M')}. "
-                    f"Listing ID: {food.id}. "
-                    f"Dial *384*12347# to claim."
-                )
 
-            for partner in partners:
-                send_whatsapp_message(
-                    partner.phone_number,
-                    f"""🔔 *MealLink — New Food Available Near You!*
+            sms_message = (
+                f"MeaLink: New food in {food.pickup_city}! "
+                f"{food.food_type} ({food.quantity_estimated} {food.quantity_unit}) "
+                f"available until {food.pickup_end_time.strftime('%H:%M')}. "
+                f"Listing ID: {food.id}. "
+                f"Dial *384*12347# to claim."
+            )
+
+            whatsapp_message = f"""🔔 *MealLink — New Food Available Near You!*
 
 *{food.food_type}* is available in *{food.pickup_city}*.
 
@@ -83,7 +78,11 @@ Open the MealLink app to claim it before
 someone else does! ⏰
 
 _MealLink — Share More. Waste Less._"""
-            )
+            
+            for partner in partners:
+                phone = normalize_phone(partner.phone_number)
+                send_sms(phone, sms_message)
+                send_whatsapp_message(phone, whatsapp_message)
          
             return Response(data=serializer.data, status=status.HTTP_201_CREATED)
         else:

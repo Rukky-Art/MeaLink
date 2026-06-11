@@ -65,7 +65,7 @@ class ClaimCreateView(APIView):
                     donor.phone_number,
                     f"""🎉 *MeaLink — Food Claimed!*
 
-Your listing *{food.food_type} - {food.quantity_estimated} {food.quanity_unit}* has been claimed.
+Your listing *{food.food_type} - {food.quantity_estimated} {food.quantity_unit}* has been claimed.
 
 *Claimed by:* {partner.name}
 *Organisation:* {partner.organisation_type}.
