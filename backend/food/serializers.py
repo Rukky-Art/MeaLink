@@ -23,6 +23,12 @@ class FoodListingsSerializer(serializers.ModelSerializer):
         user_latitude = self.context.get('user_latitude')
         user_longitude = self.context.get('user_longitude')
 
+        print("USER LAT:", self.context.get('user_latitude'))
+        print("USER LNG:", self.context.get('user_longitude'))
+
+        print("LISTING LAT:", obj.pickup_latitude)
+        print("LISTING LNG:", obj.pickup_longitude)
+
         if  user_latitude is None or user_longitude is None:
             return None
         
