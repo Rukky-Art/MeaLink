@@ -84,3 +84,5 @@ class ResetPasswordSerializer(serializers.Serializer):
     class Meta:
         fields = ['token', 'new_password']
         
+class ResendVerificationSerializer(serializers.Serializer):
+    email = serializers.EmailField()

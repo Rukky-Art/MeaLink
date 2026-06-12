@@ -3,6 +3,7 @@ from food.models import Food
 from users.serializers import UserSerializer
 from food.utils import calculate_distance
 from django.contrib.auth import get_user_model
+from drf_spectacular.utils import extend_schema_field
 
 User = get_user_model()
 
@@ -19,6 +20,7 @@ class FoodListingsSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'posted_by', 'created_at', 'distance_km', 'status']
 
+    @extend_schema_field(serializers.FloatField(allow_null=True))
     def get_distance_km(self, obj):
         user_latitude = self.context.get('user_latitude')
         user_longitude = self.context.get('user_longitude')

@@ -11,6 +11,7 @@ from users.sms import send_sms
 from drf_spectacular.utils import extend_schema
 from users.utils import normalize_phone
 from users.whatsapp import send_whatsapp_message
+from notification.models import Notification
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -57,6 +58,14 @@ class FoodListingsCreateView(APIView):
                 phone_number__isnull=False
             ).exclude(phone_number='')
 
+            #In app notification to PARTNER - food available in your city
+            Notification.objects.create(
+                user=partner,
+                title=f"New Food Available in {food.pickup_city}!",
+                message=f"{food.food_type} - {food.quantity_estimated} {food.quantity_unit} at {food.pickup_address}"
+            )
+
+            # SMS to PARTNER — food available in your city
             sms_message = (
                 f"MeaLink: New food in {food.pickup_city}! "
                 f"{food.food_type} ({food.quantity_estimated} {food.quantity_unit}) "
@@ -65,7 +74,8 @@ class FoodListingsCreateView(APIView):
                 f"Dial *384*12347# to claim."
             )
 
-            whatsapp_message = f"""🔔 *MealLink — New Food Available Near You!*
+            # WhatsApp to PARTNER — food available in your city
+            whatsapp_message = f"""🔔 *MeaLink — New Food Available Near You!*
 
 *{food.food_type}* is available in *{food.pickup_city}*.
 
@@ -74,10 +84,10 @@ class FoodListingsCreateView(APIView):
 *Pickup address:* {food.pickup_address}
 *Available until:* {food.pickup_end_time.strftime('%H:%M on %d %b')}
 
-Open the MealLink app to claim it before 
+Open the MeaLink app to claim it before 
 someone else does! ⏰
 
-_MealLink — Share More. Waste Less._"""
+_MeaLink — Share More. Waste Less._"""
             
             for partner in partners:
                 try:
@@ -95,7 +105,16 @@ class FoodListingsListView(APIView):
     serializer_class = FoodListingsSerializer
     permission_classes = [permissions.AllowAny]
 
-    @extend_schema(operation_id="list_all_food_listings")
+    @extend_schema(
+            summary="List All Food Listings",
+            description="Returns a list of all available food listings. "
+                        "If the user is a partner, listings are filtered by the partner's city. "
+                        "If the user is not logged in, only the first 8 listings are returned. "
+                        "If GPS coordinates are provided, listings are sorted by proximity.",
+            operation_id="list_all_food_listings",
+            responses=FoodListingsSerializer(many=True),
+            tags=["Food Listings"],
+        )
     #all users apart from donors can see all available food listings
     def get(self, request):
 

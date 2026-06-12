@@ -1,5 +1,7 @@
 from rest_framework import serializers
 from claims.models import Claim
+from users.serializers import UserSerializer
+from drf_spectacular.utils import extend_schema_field
 
 class FoodBasicSerializer(serializers.Serializer):
     # Nested food details inside claim response
@@ -21,7 +23,7 @@ class FoodBasicSerializer(serializers.Serializer):
 class ClaimerBasicSerializer(serializers.Serializer):
     # Basic partner info inside claim response
     id = serializers.IntegerField(read_only=True)
-    name = serializers.CharField(read_only=True)
+    business_name = serializers.CharField(read_only=True)
     email = serializers.EmailField(read_only=True)
     phone_number = serializers.CharField(read_only=True)
     organisation_type = serializers.CharField(read_only=True)
@@ -29,7 +31,7 @@ class ClaimerBasicSerializer(serializers.Serializer):
 class DonorBasicSerializer(serializers.Serializer):
     # Basic donor info inside claim response
     id = serializers.IntegerField(read_only=True)
-    name = serializers.CharField(read_only=True)
+    business_name = serializers.CharField(read_only=True)
     email = serializers.EmailField(read_only=True)
     phone_number = serializers.CharField(read_only=True)
 
@@ -54,7 +56,8 @@ class ClaimDetailSerializer(serializers.ModelSerializer):
         
         read_only_fields = ['id', 'food', 'donor', 'claimer', 'pickup_code', 'pickup_code_verified', 
                             'pickup_time', 'status', 'claim_time']
-        
+
+    @extend_schema_field(DonorBasicSerializer)  
     def get_donor(self, obj):
         donor = obj.food.posted_by
         return DonorBasicSerializer(donor).data
