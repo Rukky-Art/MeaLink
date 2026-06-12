@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from users.serializers import UserSerializer, ForgotPasswordSerializer, ResetPasswordSerializer
+from users.serializers import UserSerializer, ForgotPasswordSerializer, ResetPasswordSerializer, ResendVerificationSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -12,6 +12,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from users.models import EmailVerificationToken, PasswordResetToken
 
 from drf_spectacular.utils import extend_schema
+from drf_spectacular.types import OpenApiTypes
 
 User = get_user_model()
 
@@ -81,7 +82,12 @@ class VerifyEmailView(APIView):
         return Response({'message': 'Email verified successfully', 'data': serializer.data}, status=status.HTTP_200_OK)
 
 class ResendVerificationEmailView(APIView):
+    serializer_class = ResendVerificationSerializer
 
+    @extend_schema(
+        request=ResendVerificationSerializer,
+        responses={200: OpenApiTypes.OBJECT}
+    )
     def post(self, request):
         user = request.user
 

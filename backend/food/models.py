@@ -40,6 +40,6 @@ class Food(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.food_type} by {self.posted_by.name}"
+        return f"{self.food_type} by {self.posted_by.business_name}"
 
 # Create your models here.

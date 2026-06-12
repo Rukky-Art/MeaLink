@@ -10,7 +10,7 @@ User = get_user_model()
 
 def main_menu():
     return (
-        "CON Welcome to MealLink 🌱\n"
+        "CON Welcome to MeaLink 🌱\n"
         "1. View Available Food\n"
         "2. My Active Claims\n"
         "3. Claim Food by ID\n"
@@ -52,7 +52,7 @@ def ussd_handler(request):
     
     # ── EXIT ──
     elif text == "0":
-        response = "END Thank you for using MealLink! 🌱"
+        response = "END Thank you for using MeaLink! 🌱"
 
 
 # ─── MENU LEVEL 1 ───

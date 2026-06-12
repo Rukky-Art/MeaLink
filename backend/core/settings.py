@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     'food',
     'claims',
     'distribution',
+    'notification'
 ]
 
 AUTH_USER_MODEL = 'users.User'

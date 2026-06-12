@@ -27,7 +27,7 @@ class Claim(models.Model):
     claim_time = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.claimer.name} claimed {self.food.food_type}"
+        return f"{self.claimer.business_name} claimed {self.food.food_type}"
 
 
 # Create your models here.

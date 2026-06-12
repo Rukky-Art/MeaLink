@@ -8,6 +8,8 @@ from claims.models import Claim
 from drf_spectacular.utils import extend_schema
 from django.utils import timezone
 from users.whatsapp import send_whatsapp_message
+from users.utils import normalize_phone
+from notification.models import Notification
 
 from claims.serializers import (
     ClaimCreateSerializer, 
@@ -59,33 +61,54 @@ class ClaimCreateView(APIView):
             donor = food.posted_by
             partner = request.user
 
+            #In app notification to DONOR - food has been claimed
+            Notification.objects.create(
+                user=donor,
+                title="Food Claimed!!!",
+                message=f"{partner.business_name} claimed your {food.food_type} - {food.quantity_estimated} {food.quantity_unit}"
+            )
+
             # WhatsApp to DONOR — food has been claimed
-            if donor.phone_number:
-                send_whatsapp_message(
-                    donor.phone_number,
-                    f"""🎉 *MeaLink — Food Claimed!*
+            whatsapp_message = f"""🎉 *MeaLink — Food Claimed!*
 
 Your listing *{food.food_type} - {food.quantity_estimated} {food.quantity_unit}* has been claimed.
 
-*Claimed by:* {partner.name}
+*Claimed by:* {partner.business_name}
 *Organisation:* {partner.organisation_type}.
 
 When the partner arrives, verify their code in the app.
 Give the food ONLY when the code matches. ✅
 
 _MeaLink — Share More. Waste Less._""" #click this link to verify pickupcode or scan qr code
+
+            
+            try:
+                phone = normalize_phone(donor.phone_number),
+                send_whatsapp_message(phone, whatsapp_message)
+            except Exception as e:
+                print("NOTIFICATION ERROR:", e)
+
+            #In app notification to PARTNER - claim confirmed
+            Notification.objects.create(
+                user=partner,
+                title="Claim Confirmed!",
+                message=(
+f"You have successfully claimed {food.food_type} "
+f"- {food.quantity_estimated} {food.quantity_unit} "
+f"from {food.posted_by.business_name}.\n\n"
+f"Pickup code: {claim.pickup_code}\n"
+f"Show this to the donor when you arrive."
+                )
+                
             )
 
             # WhatsApp to PARTNER — pickup code
-            if partner.phone_number:
-                send_whatsapp_message(
-                    partner.phone_number,
-                    f"""✅ *MeaLink — Claim Confirmed!*
+            whatsapp_message = f"""✅ *MeaLink — Claim Confirmed!*
             
 
 You have claimed *{food.food_type} - {food.quantity_estimated} {food.quantity_unit}*.
 
-*Donor:* {donor.name}
+*Donor:* {donor.business_name}
 *Pickup address:* {food.pickup_address}
 *Pickup window:* until {food.pickup_end_time.strftime('%H:%M on %d %b')}
 *Contact:* {food.contact_person_name} — {food.contact_person_phone}
@@ -96,11 +119,19 @@ Show this code to the donor when you arrive.
 They will verify it to release the food. 🍱
 
 _MeaLink — Share More. Waste Less._"""
-            )
+
+            
+            try:
+                phone = normalize_phone(partner.phone_number),
+                send_whatsapp_message(phone, whatsapp_message)
+            except Exception as e:
+                print("NOTIFICATION ERROR:", e)
 
             return Response(data=ClaimDetailSerializer(claim).data, status=status.HTTP_201_CREATED)
         else:
             return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+
 
     @extend_schema(operation_id="list_claims")
     def get(self, request):
@@ -210,19 +241,19 @@ class VerifyPickupCodeView(APIView):
                     f"""✅ *MeaLink — Pickup Confirmed!*
 
 *{claim.food.food_type}* has been successfully 
-collected by *{partner.name}*.
+collected by *{partner.business_name}*.
 
 The food is now on its way to those who need it.
 Thank you for reducing food waste! 🌍
 
-_MealLink — Share More. Waste Less._"""
+_MeaLink — Share More. Waste Less._"""
         )
                 
         # WhatsApp to PARTNER — remind to log distribution
         if partner.phone_number:
             send_whatsapp_message(
                 partner.phone_number,
-                f"""🍱 *MealLink — Pickup Complete!*
+                f"""🍱 *MeaLink — Pickup Complete!*
 
 Pickup of *{claim.food.food_type}* confirmed.
 
@@ -232,7 +263,7 @@ the food, log your impact in the MeaLink app.
 This helps donors see the difference 
 they are making. 💚
 
-_MealLink — Share More. Waste Less._"""
+_MeaLink — Share More. Waste Less._"""
         )
 
             return Response(data={"message": "Pickup code verified successfully"}, status=status.HTTP_200_OK)
