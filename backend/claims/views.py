@@ -83,7 +83,7 @@ _MeaLink — Share More. Waste Less._""" #click this link to verify pickupcode o
 
             
             try:
-                phone = normalize_phone(donor.phone_number),
+                phone = normalize_phone(donor.phone_number)
                 send_whatsapp_message(phone, whatsapp_message)
             except Exception as e:
                 print("NOTIFICATION ERROR:", e)
@@ -122,7 +122,7 @@ _MeaLink — Share More. Waste Less._"""
 
             
             try:
-                phone = normalize_phone(partner.phone_number),
+                phone = normalize_phone(partner.phone_number)
                 send_whatsapp_message(phone, whatsapp_message)
             except Exception as e:
                 print("NOTIFICATION ERROR:", e)
@@ -222,6 +222,7 @@ class VerifyPickupCodeView(APIView):
         #check code matches
         pickup_code = serializer.validated_data['pickup_code']
         if pickup_code == claim.pickup_code:
+
             claim.status = 'picked_up'
             claim.pickup_code_verified = True
             claim.pickup_time = timezone.now()
@@ -233,6 +234,18 @@ class VerifyPickupCodeView(APIView):
 
             donor = claim.food.posted_by
             partner = claim.claimer
+
+            Notification.objects.create(
+                user=donor,
+                title="Pickup Confirmed",
+                message=f"{partner.business_name} has collected {claim.food.food_type}."
+            )
+
+            Notification.objects.create(
+                user=partner,
+                title="Pickup Complete",
+                message=f"Pickup of {claim.food.food_type} has been verified."
+            )
 
             # WhatsApp to DONOR — pickup confirmed
             if donor.phone_number:

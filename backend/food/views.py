@@ -59,11 +59,12 @@ class FoodListingsCreateView(APIView):
             ).exclude(phone_number='')
 
             #In app notification to PARTNER - food available in your city
-            Notification.objects.create(
-                user=partner,
-                title=f"New Food Available in {food.pickup_city}!",
-                message=f"{food.food_type} - {food.quantity_estimated} {food.quantity_unit} at {food.pickup_address}"
-            )
+            for partner in partners:
+                Notification.objects.create(
+                    user=partner,
+                    title=f"New Food Available in {food.pickup_city}!",
+                    message=f"{food.food_type} - {food.quantity_estimated} {food.quantity_unit} at {food.pickup_address}"
+                )
 
             # SMS to PARTNER — food available in your city
             sms_message = (
