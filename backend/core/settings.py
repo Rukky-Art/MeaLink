@@ -32,6 +32,8 @@ DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
 
+ALLOW_UNVERIFIED_LOGIN = os.getenv("ALLOW_UNVERIFIED_LOGIN", "False") == "True"
+
 
 
 # Application definition
