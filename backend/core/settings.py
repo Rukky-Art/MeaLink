@@ -194,7 +194,7 @@ EMAIL_USE_SSL = False
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
-FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:5176')
+WEB_FRONTEND_URL = os.getenv('WEB_FRONTEND_URL', 'http://localhost:5176')
 
 
 CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', '').split(',')

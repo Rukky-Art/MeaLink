@@ -4,7 +4,7 @@ from django.conf import settings
 
 def send_verification_email(user, token):
 
-    verify_link = f"{settings.FRONTEND_URL}/api/users/verify-email?token={token}"
+    verify_link = f"{settings.WEB_FRONTEND_URL}/verify-email?token={token}"
 
     send_mail(
         subject="Verify your MeaLink email",
@@ -30,7 +30,7 @@ def send_verification_email(user, token):
 
 def send_password_reset_email(user, token):
 
-    reset_link = f"{settings.FRONTEND_URL}/api/users/reset-password?token={token}"
+    reset_link = f"{settings.WEB_FRONTEND_URL}/reset-password?token={token}"
 
     send_mail(
         subject="Reset your MeaLink password",
