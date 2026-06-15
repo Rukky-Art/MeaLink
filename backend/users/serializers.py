@@ -2,6 +2,9 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from users.utils import normalize_phone
 
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework.exceptions import AuthenticationFailed
+
 User = get_user_model()
 
 class UserSerializer(serializers.ModelSerializer):
@@ -69,7 +72,17 @@ class UserSerializer(serializers.ModelSerializer):
             longitude=validated_data.get('longitude', None)
         )
         return user
-    
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        data = super().validate(attrs)
+
+        if not self.user.is_verified:
+            raise AuthenticationFailed(
+                "Please verify your email before logging in."
+            )
+
+        return data
 
 class ForgotPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField()

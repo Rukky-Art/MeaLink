@@ -8,6 +8,9 @@ from django.contrib.auth import get_user_model
 from users.email import send_verification_email, send_password_reset_email
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from rest_framework_simplejwt.views import TokenObtainPairView
+from users.serializers import CustomTokenObtainPairSerializer
+
 
 from users.models import EmailVerificationToken, PasswordResetToken
 
@@ -46,13 +49,14 @@ class UserRegistrationView(APIView):
 
             return Response({
                 'user': UserSerializer(user).data,
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
                 'message': 'Registration successful. Please check your email.'
             }, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer   
+
 class VerifyEmailView(APIView):
     serializer_class = UserSerializer
     permission_classes = [permissions.AllowAny]
@@ -78,14 +82,19 @@ class VerifyEmailView(APIView):
         verify_token.is_used = True
         verify_token.save()
 
-        serializer = UserSerializer(user)
-        return Response({'message': 'Email verified successfully', 'data': serializer.data}, status=status.HTTP_200_OK)
+        refresh = RefreshToken.for_user(user)
 
+        return Response({
+            'message': 'Email verified successfully',
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+            'user': UserSerializer(user).data
+        }, status=status.HTTP_200_OK)
+    
 class ResendVerificationEmailView(APIView):
     serializer_class = ResendVerificationSerializer
 
     @extend_schema(
-        request=ResendVerificationSerializer,
         responses={200: OpenApiTypes.OBJECT}
     )
     def post(self, request):
