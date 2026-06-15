@@ -50,7 +50,12 @@ class UserRegistrationView(APIView):
             print(settings.EMAIL_HOST_USER)
 
             # Send email — no request needed
-            send_verification_email(user, verify_token.token)
+            try:
+                send_verification_email(user, verify_token.token)
+                print("Email sent successfully!")
+            except Exception as e:
+                print("SEND EMAIL ERROR:", e)
+
 
             return Response({
                 'user': UserSerializer(user).data,
