@@ -10,6 +10,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from rest_framework_simplejwt.views import TokenObtainPairView
 from users.serializers import CustomTokenObtainPairSerializer
+from django.conf import settings
 
 
 from users.models import EmailVerificationToken, PasswordResetToken
@@ -43,6 +44,10 @@ class UserRegistrationView(APIView):
                 is_used=False,
             ).delete()
             verify_token = EmailVerificationToken.objects.create(user=user)
+
+            print(settings.EMAIL_HOST)
+            print(settings.EMAIL_PORT)
+            print(settings.EMAIL_HOST_USER)
 
             # Send email — no request needed
             send_verification_email(user, verify_token.token)
