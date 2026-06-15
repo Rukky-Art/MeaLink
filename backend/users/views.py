@@ -45,21 +45,17 @@ class UserRegistrationView(APIView):
             ).delete()
             verify_token = EmailVerificationToken.objects.create(user=user)
 
-            print(settings.EMAIL_HOST)
-            print(settings.EMAIL_PORT)
-            print(settings.EMAIL_HOST_USER)
-
             # Send email — no request needed
             try:
                 send_verification_email(user, verify_token.token)
-                print("Email sent successfully!")
+                email_message = "Registration successful. Please check your email."
             except Exception as e:
                 print("SEND EMAIL ERROR:", e)
 
 
             return Response({
                 'user': UserSerializer(user).data,
-                'message': 'Registration successful. Please check your email.'
+                'message': email_message,
             }, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -122,7 +118,14 @@ class ResendVerificationEmailView(APIView):
         verify_token = EmailVerificationToken.objects.create(user=user)
 
         # Send email
-        send_verification_email(user, verify_token.token)
+        try:
+            send_verification_email(user, verify_token.token)
+        except Exception as e:
+            print("SEND EMAIL ERROR:", e)
+            return Response(
+                {"error": "Could not send verification email right now."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
         return Response({'message': 'Verification email sent successfully'}, status=status.HTTP_200_OK)
     
@@ -147,8 +150,11 @@ class ForgotPasswordView(APIView):
                 reset_token = PasswordResetToken.objects.create(user=user)
 
                 # Send email
-                send_password_reset_email(user, reset_token.token)
-
+                try:
+                    send_password_reset_email(user, reset_token.token)
+                except Exception as e:
+                    print("SEND EMAIL ERROR:", e)
+                    
             except User.DoesNotExist:
                 pass
 
