@@ -14,6 +14,7 @@ from users.whatsapp import send_whatsapp_message
 from notification.models import Notification
 from django.contrib.auth import get_user_model
 
+
 User = get_user_model()
 
 # Create your views here.
@@ -41,6 +42,13 @@ class FoodListingsCreateView(APIView):
         if request.user.role != 'donor':
             return Response(data={"error": "Only donors can create food listings"}, status=status.HTTP_403_FORBIDDEN)
         
+        if not request.user.is_business_verified:
+            return Response(
+                {"error": "Your account is pending verification. "
+                        "Please wait for admin approval before posting food."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
         data = request.data
         posted_by = request.user
         serializer = self.serializer_class(
@@ -57,6 +65,7 @@ class FoodListingsCreateView(APIView):
                 is_active=True,
                 phone_number__isnull=False
             ).exclude(phone_number='')
+
 
             #In app notification to PARTNER - food available in your city
             for partner in partners:

@@ -31,6 +31,7 @@ urlpatterns = [
     path('api/claims/', include('claims.urls')),
     path('api/distribution/', include('distribution.urls')),
     path('api/notification/', include('notification.urls')),
+    path('api/admin/', include('admin_panel.urls')),
 
     path('api/token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),

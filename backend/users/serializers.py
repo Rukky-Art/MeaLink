@@ -16,9 +16,9 @@ class UserSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'email', 'name', 'phone_number', 'role', 
             'business_name', 'business_registration_number', 'organisation_type',
-            'address', 'city', 'country', 'latitude', 'longitude', 'password', 'created_at', 'is_verified'
+            'address', 'city', 'country', 'latitude', 'longitude', 'password', 'created_at', 'is_email_verified', 'is_business_verified'
         ]
-        read_only_fields = ['id', 'created_at', 'is_verified']
+        read_only_fields = ['id', 'created_at', 'is_email_verified', 'is_business_verified']
 
     #donors must have organisation type
     def validate(self, data):
@@ -78,7 +78,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         data = super().validate(attrs)
 
-        if not self.user.is_verified:
+        if not self.user.is_email_verified:
             raise AuthenticationFailed(
                 "Please verify your email before logging in."
             )
@@ -100,3 +100,36 @@ class ResetPasswordSerializer(serializers.Serializer):
         
 class ResendVerificationSerializer(serializers.Serializer):
     pass
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = [
+            'id', 'email', 'name', 'phone_number', 'role',
+            'business_name', 'business_registration_number', 'organisation_type',
+            'address', 'city', 'country', 'latitude', 'longitude', 'created_at', 'is_business_verified'
+        ]
+        read_only_fields = ['id', 'email', 'role', 'created_at', 'is_business_verified']
+
+class AdminRegistrationSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = User
+        fields = [
+            'id', 'email', 'name', 'phone_number', 'password'
+        ]
+        read_only_fields = ['id']
+
+    def create(self, validated_data):
+        return User.objects.create_superuser(
+            email=validated_data['email'],
+            password=validated_data['password'],
+            name=validated_data['name'],
+            phone_number=validated_data.get('phone_number'),
+            role='admin',
+            city='N/A',
+            country='NG',
+            business_name='MeaLink Admin',
+            is_email_verified=True,
+        )

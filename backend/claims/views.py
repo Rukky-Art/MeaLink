@@ -36,6 +36,13 @@ class ClaimCreateView(APIView):
         #check permission first
         if request.user.role != 'partner':
             return Response(data={"error": "Only partners can claim food listings"}, status=status.HTTP_403_FORBIDDEN)
+        
+        if not request.user.is_business_verified:
+            return Response(
+                {"error": "Your account is pending verification. "
+                        "Please wait for admin approval before claiming food."},
+                status=status.HTTP_403_FORBIDDEN
+            )
 
         serializer = self.serializer_class(data = request.data)
         if serializer.is_valid():

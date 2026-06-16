@@ -1,5 +1,12 @@
 from django.shortcuts import render
-from users.serializers import UserSerializer, ForgotPasswordSerializer, ResetPasswordSerializer, ResendVerificationSerializer
+from users.serializers import (
+    UserSerializer, 
+    ForgotPasswordSerializer, 
+    ResetPasswordSerializer, 
+    UserProfileSerializer,
+    ResendVerificationSerializer,
+    AdminRegistrationSerializer
+)
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -11,6 +18,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from users.serializers import CustomTokenObtainPairSerializer
 from django.conf import settings
+from admin_panel.models import AdminPanel
 
 
 from users.models import EmailVerificationToken, PasswordResetToken
@@ -34,6 +42,10 @@ class UserRegistrationView(APIView):
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
+
+            # Auto create verification record for non-admin users
+            if user.role != 'admin':
+                AdminPanel.objects.create(user=user)
 
             #Auto login
             refresh = RefreshToken.for_user(user)
@@ -82,7 +94,7 @@ class VerifyEmailView(APIView):
             return Response({'error': 'Verification link has expired. Please request a new one.'}, status=status.HTTP_400_BAD_REQUEST)
 
         user = verify_token.user
-        user.is_verified = True
+        user.is_email_verified = True
         user.save()
 
         verify_token.is_used = True
@@ -106,7 +118,7 @@ class ResendVerificationEmailView(APIView):
     def post(self, request):
         user = request.user
 
-        if user.is_verified:
+        if user.is_email_verified:
             return Response({'message': 'This email is already verified'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Delete existing tokens
@@ -190,6 +202,22 @@ class ResetPasswordView(APIView):
             return Response({'message': 'Password reset successfully. You can now login with your new password.'}, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class AdminRegistrationView(APIView):
+    serializer_class = AdminRegistrationSerializer
+    permission_classes = [permissions.AllowAny]
+
+    @extend_schema(
+        request=AdminRegistrationSerializer,
+        responses={201: AdminRegistrationSerializer}
+    )
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            return Response(UserRegistrationView (user).data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserListView(APIView):
     serializer_class = UserSerializer
@@ -205,15 +233,15 @@ class UserListView(APIView):
         return Response(data=serializer.data, status=status.HTTP_200_OK)
 
 class UserProfileView(APIView):
-    serializer_class = UserSerializer
+    serializer_class = UserProfileSerializer
 
     @extend_schema( 
         request=None,
-        responses={200: UserSerializer}
+        responses={200: UserProfileSerializer}
     )
     def get(self, request):
         user = request.user
-        serializer = UserSerializer(user)
+        serializer = UserProfileSerializer(user)
         return Response(data=serializer.data, status=status.HTTP_200_OK)
     
     def patch(self, request):
