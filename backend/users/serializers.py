@@ -78,6 +78,10 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         data = super().validate(attrs)
 
+        data["role"] = self.user.role
+        data["email"] = self.user.email
+        data["name"] = self.user.name
+
         # if not self.user.is_email_verified:
         #     raise AuthenticationFailed(
         #         "Please verify your email before logging in."
