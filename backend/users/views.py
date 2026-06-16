@@ -47,27 +47,27 @@ class UserRegistrationView(APIView):
             if user.role != 'admin':
                 AdminPanel.objects.create(user=user)
 
-            #Auto login
-            refresh = RefreshToken.for_user(user)
+            # #Auto login
+            # refresh = RefreshToken.for_user(user)
 
-            # Create verification token
-            EmailVerificationToken.objects.filter(
-                user=user,
-                is_used=False,
-            ).delete()
-            verify_token = EmailVerificationToken.objects.create(user=user)
+            # # Create verification token
+            # EmailVerificationToken.objects.filter(
+            #     user=user,
+            #     is_used=False,
+            # ).delete()
+            # verify_token = EmailVerificationToken.objects.create(user=user)
 
-            # Send email — no request needed
-            try:
-                send_verification_email(user, verify_token.token)
-                email_message = "Registration successful. Please check your email."
-            except Exception as e:
-                print("SEND EMAIL ERROR:", e)
+            # # Send email — no request needed
+            # try:
+            #     send_verification_email(user, verify_token.token)
+            #     email_message = "Registration successful. Please check your email."
+            # except Exception as e:
+            #     print("SEND EMAIL ERROR:", e)
 
 
             return Response({
                 'user': UserSerializer(user).data,
-                'message': email_message,
+                'message':"Registration successful.",
             }, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -104,8 +104,8 @@ class VerifyEmailView(APIView):
 
         return Response({
             'message': 'Email verified successfully',
-            'refresh': str(refresh),
-            'access': str(refresh.access_token),
+            # 'refresh': str(refresh),
+            # 'access': str(refresh.access_token),
             'user': UserSerializer(user).data
         }, status=status.HTTP_200_OK)
     
@@ -216,7 +216,7 @@ class AdminRegistrationView(APIView):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-            return Response(UserRegistrationView (user).data, status=status.HTTP_201_CREATED)
+            return Response(AdminRegistrationSerializer(user).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserListView(APIView):
