@@ -27,16 +27,20 @@ class AdminPanelListView(APIView):
     )
     def get(self, request):
         # Filter by status if provided
-        verification_status = request.query_params.get('status', None)
+        verification_status = request.query_params.get('status')
+        role = request.query_params.get('role')
+        country = request.query_params.get('country')
+
+        admin_panels = AdminPanel.objects.select_related("user").order_by("-created_at")
 
         if verification_status:
-            admin_panels = AdminPanel.objects.filter(
-                verification_status=verification_status
-            ).select_related('user').order_by('-created_at')
-        else:
-            admin_panels = AdminPanel.objects.all().select_related(
-                'user'
-            ).order_by('-created_at')
+            admin_panels = admin_panels.filter(verification_status=verification_status)
+        
+        if role:
+            admin_panels = admin_panels.filter(user__role=role)
+
+        if country:
+            admin_panels = admin_panels.filter(user__country=country)
 
         serializer = AdminPanelSerializer(admin_panels, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
