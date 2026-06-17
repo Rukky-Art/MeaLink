@@ -107,6 +107,15 @@ class AdminVerifyView(APIView):
             elif new_status == 'rejected':
                 user.is_business_verified = False
                 user.save()
+
+                if user.role == 'donor' and hasattr(user, 'donor_detail'):
+                    user.donor_detail.rejection_reason = note
+                    user.donor_detail.save()
+
+                elif user.role == 'partner' and hasattr(user, 'partner_profile'):
+                    user.partner_profile.rejection_reason = note
+                    user.partner_profile.save()
+                
                 # Send rejection email with reason
                 notify_verification_rejected(user, note)
 

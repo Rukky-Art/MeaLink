@@ -1,17 +1,30 @@
 from rest_framework import serializers  
 from admin_panel.models import AdminPanel
 from django.contrib.auth import get_user_model
+from users.models import DonorDetails, PartnerDetails
 
 User = get_user_model()
 
+class DonorExtraBasicSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DonorDetails
+        fields = ['food_safety_certificate_url']
+
+class PartnerExtraBasicSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PartnerDetails
+        fields = ['ngo_certificate_url']
+
 class UserBasicSerializer(serializers.ModelSerializer):
+    donor_detail = DonorExtraBasicSerializer(read_only=True)
+    partner_detail = PartnerExtraBasicSerializer(read_only=True)
     """Basic user info shown inside admin panel response"""
     class Meta:
         model = User
         fields = [
             'id', 'email', 'name', 'phone_number',
-            'role', 'organisation_type', 'business_name', 'business_registration_number',
-            'city', 'country', 'created_at'
+            'role', 'organisation_type', 'business_name', 'business_registration_number', 'address',
+            'city', 'country', 'created_at', 'donor_detail', 'partner_detail'
         ]
 
 class AdminBasicSerializer(serializers.ModelSerializer):

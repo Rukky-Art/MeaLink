@@ -23,6 +23,8 @@ class UserManager(BaseUserManager):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('role', 'admin')  # Set role to 'admin' for superusers
+        extra_fields.setdefault('is_email_verified', True)
+        extra_fields.setdefault('is_business_verified', True)
 
         if extra_fields.get('is_staff') is not True:
             raise ValueError('Superuser must have is_staff=True.')
@@ -32,12 +34,11 @@ class UserManager(BaseUserManager):
         return self.create_user(email, password, **extra_fields)
 
 class User(AbstractBaseUser, PermissionsMixin):
-    ROLE_CHOICES = (
-        ('donor', 'Donor'),
-        ('partner', 'Partner'),
-        ('receiver', 'Receiver'),
-        ('admin', 'Admin'),
-    )
+ 
+    class Role(models.TextChoices):
+        DONOR = 'donor', 'Donor'
+        PARTNER = 'partner', 'Partner'
+        ADMIN = 'admin', 'Admin'
 
     DONOR_TYPE_CHOICES = [
         ('restaurant', 'Restaurant'),
@@ -63,21 +64,26 @@ class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
     name = models.CharField(max_length=255)
     phone_number = models.CharField(max_length=20, blank=True, null=True)
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES)  # 'donor' or 'receiver' or 'admin'
+    role = models.CharField(max_length=20, choices=Role.choices)  # 'donor' or 'receiver' or 'admin'
+    organisation_type = models.CharField(max_length=50, choices=DONOR_TYPE_CHOICES + PARTNER_TYPE_CHOICES, blank=True, null=True)  #only for donors
+    
     business_name = models.CharField(max_length=255, blank=True, default='')
     business_registration_number = models.CharField(max_length=100, blank=True, null=True)  #for donors and partners
-    organisation_type = models.CharField(max_length=225, choices=DONOR_TYPE_CHOICES + PARTNER_TYPE_CHOICES, blank=True, null=True)  #only for donors
+
     address = models.CharField(max_length=255, blank=True, null=True)
     city = models.CharField(max_length=100)
     country = models.CharField(max_length=100)
     latitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
     longitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True,null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+
+    
     is_email_verified = models.BooleanField(default=False)
     is_business_verified = models.BooleanField(default=False)
+
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     objects = UserManager()
 
@@ -86,6 +92,46 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+
+class DonorDetails(models.Model):
+    """
+    Stores document uploads and operational parameters for businesses donating surplus food.
+    """
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name="donor_detail")
+   
+    food_safety_certificate_url = models.URLField(blank=True, null=True)
+
+    rejection_reason = models.TextField(blank=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Donor details: {self.user.business_name or self.user.email}"
+
+
+class PartnerDetails(models.Model):
+    """
+    Stores non-profit document uploads and metric thresholds for receiving partners.
+    """
+
+    # class CapacityTiers(models.TextChoices):
+    #     SMALL = "1-50", "1 - 50 People"
+    #     MEDIUM = "51-200", "51 - 200 People"
+    #     LARGE = "201+", "201+ People"
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name="partner_profile")
+
+    #ngo_registration_number = models.CharField(max_length=100)
+    #feeding_capacity = models.CharField(max_length=10, choices=CapacityTiers.choices, default=CapacityTiers.SMALL)
+
+    # Manual verification document fields
+    ngo_certificate_url = models.URLField(blank=True, null=True)
+
+    rejection_reason = models.TextField(blank=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Partner profile: {self.user.business_name or self.user.email}"
 
 def generate_token():
         return secrets.token_urlsafe(32)  # generates a secure random token

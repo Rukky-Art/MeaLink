@@ -5,7 +5,8 @@ from users.serializers import (
     ResetPasswordSerializer, 
     UserProfileSerializer,
     ResendVerificationSerializer,
-    AdminRegistrationSerializer
+    AdminRegistrationSerializer,
+    CustomTokenObtainPairSerializer
 )
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -16,12 +17,13 @@ from users.email import send_verification_email, send_password_reset_email
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from rest_framework_simplejwt.views import TokenObtainPairView
-from users.serializers import CustomTokenObtainPairSerializer
 from django.conf import settings
 from admin_panel.models import AdminPanel
+from users.verification_uploads import upload_verification_document
+from rest_framework.parsers import MultiPartParser, FormParser
+from cloudinary.exceptions import Error
 
-
-from users.models import EmailVerificationToken, PasswordResetToken
+from users.models import DonorDetails, PartnerDetails, EmailVerificationToken, PasswordResetToken
 
 from drf_spectacular.utils import extend_schema
 from drf_spectacular.types import OpenApiTypes
@@ -33,13 +35,42 @@ User = get_user_model()
 class UserRegistrationView(APIView):
     serializer_class = UserSerializer
     permission_classes = [permissions.AllowAny]
+    parser_classes = [MultiPartParser, FormParser]
     
     @extend_schema(
             request=UserSerializer, 
             responses={201: UserSerializer}
     )
     def post(self, request):
-        serializer = UserSerializer(data=request.data)
+
+        food_cert = request.FILES.get("food_safety_certificate")
+        ngo_cert = request.FILES.get("ngo_certificate")
+
+        food_cert_url = None
+
+        try:
+            if food_cert:
+                food_cert_url = upload_verification_document(food_cert, "donors")
+        except Error as e:
+            return Response({"error": f"Certificate upload failed: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
+
+        ngo_cert_url = None
+        try:
+            if ngo_cert:
+                ngo_cert_url = upload_verification_document(ngo_cert, "partners")
+        except Error as e:
+            return Response({"error": f"Certificate upload failed: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
+
+        data = request.data.copy()
+
+        if food_cert_url:
+            data["food_safety_certificate_url"] = food_cert_url
+
+        if ngo_cert_url:
+            data["ngo_certificate_url"] = ngo_cert_url
+
+
+        serializer = UserSerializer(data=data)
         if serializer.is_valid():
             user = serializer.save()
 
@@ -64,12 +95,29 @@ class UserRegistrationView(APIView):
             # except Exception as e:
             #     print("SEND EMAIL ERROR:", e)
 
-
+            print(request.FILES)
             return Response({
                 'user': UserSerializer(user).data,
                 'message':"Registration successful.",
             }, status=status.HTTP_201_CREATED)
 
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class AdminRegistrationView(APIView):
+    serializer_class = AdminRegistrationSerializer
+    permission_classes = [permissions.IsAdminUser] #   Only existing admins can create new admin accounts.
+
+    @extend_schema(
+        summary="Only existing admins can create new admin accounts",
+        request=AdminRegistrationSerializer,
+        responses={201: AdminRegistrationSerializer}
+    )
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            return Response(AdminRegistrationSerializer(user).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -201,22 +249,6 @@ class ResetPasswordView(APIView):
 
             return Response({'message': 'Password reset successfully. You can now login with your new password.'}, status=status.HTTP_200_OK)
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-class AdminRegistrationView(APIView):
-    serializer_class = AdminRegistrationSerializer
-    permission_classes = [permissions.AllowAny]
-
-    @extend_schema(
-        request=AdminRegistrationSerializer,
-        responses={201: AdminRegistrationSerializer}
-    )
-
-    def post(self, request):
-        serializer = self.serializer_class(data=request.data)
-        if serializer.is_valid():
-            user = serializer.save()
-            return Response(AdminRegistrationSerializer(user).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserListView(APIView):

@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from users.utils import normalize_phone
+from users.models import DonorDetails, PartnerDetails
 
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework.exceptions import AuthenticationFailed
@@ -16,7 +17,8 @@ class UserSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'email', 'name', 'phone_number', 'role', 
             'business_name', 'business_registration_number', 'organisation_type',
-            'address', 'city', 'country', 'latitude', 'longitude', 'password', 'created_at', 'is_email_verified', 'is_business_verified'
+            'address', 'city', 'country', 'latitude', 'longitude', 'password', 'created_at', 
+            'is_email_verified', 'is_business_verified',
         ]
         read_only_fields = ['id', 'created_at', 'is_email_verified', 'is_business_verified']
 
@@ -25,7 +27,9 @@ class UserSerializer(serializers.ModelSerializer):
         donor_types = ['restaurant', 'hotel', 'catering', 'supermarket', 'bakery', 'event center', 'cafeteria', 'other']
         partner_types = ['food bank', 'ngo', 'religious organization', 'shelter', 'community coordinator', 'local volunteer group', 'other']
 
-        if data.get('role') == 'donor':
+        role = data.get('role')
+
+        if role == 'donor':
             if not data.get('organisation_type'):
                 raise serializers.ValidationError({
                     'organisation_type': 'Required for donors.'
@@ -35,7 +39,7 @@ class UserSerializer(serializers.ModelSerializer):
                     'organisation_type': 'Invalid type for donor role.'
                 })
 
-        if data.get('role') == 'partner':
+        if role == 'partner':
             if not data.get('organisation_type'):
                 raise serializers.ValidationError({
                     'organisation_type': 'Required for partners.'
@@ -44,6 +48,31 @@ class UserSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({
                     'organisation_type': 'Invalid type for partner role.'
                 })
+            
+
+        # def validate(self, data):
+
+        # role = data.get("role")
+
+        # if role == "donor":
+        #     if not data.get("food_safety_certificate_url"):
+        #         raise serializers.ValidationError(
+        #             {
+        #                 "food_safety_certificate":
+        #                 "Food safety certificate is required."
+        #             }
+        #         )
+
+        # if role == "partner":
+        #     if not data.get("ngo_certificate_url"):
+        #         raise serializers.ValidationError(
+        #             {
+        #                 "ngo_certificate":
+        #                 "NGO certificate is required."
+        #             }
+        #         )
+
+        # return data
 
         return data
 
@@ -57,6 +86,10 @@ class UserSerializer(serializers.ModelSerializer):
         
 
     def create(self, validated_data):
+        # Pull out the profile fields before creating User
+        food_safety_certificate_url = validated_data.pop('food_safety_certificate_url', None)
+        ngo_certificate_url = validated_data.pop('ngo_certificate_url', None)
+
         user = User.objects.create_user( #calls custom user manager's create_user method 
             email=validated_data['email'],
             password=validated_data['password'],
@@ -65,14 +98,41 @@ class UserSerializer(serializers.ModelSerializer):
             role=validated_data['role'],
             business_name=validated_data['business_name'],
             business_registration_number=validated_data.get('business_registration_number', None),
-            organisation_type=validated_data.get('organisation_type', None),
-            address=validated_data.get('address', None),
+            organisation_type=validated_data.get('organisation_type'),
+            address=validated_data.get('address'),
             city=validated_data['city'],
             country=validated_data['country'],
             latitude=validated_data.get('latitude', None),
             longitude=validated_data.get('longitude', None)
         )
+
+        # Create the matching profile record
+        # Think of it like: User = ID card, Profile = application form
+        if user.role == 'donor':
+            DonorDetails.objects.create(
+                user=user,
+                food_safety_certificate_url=food_safety_certificate_url
+            )
+
+        elif user.role == 'partner':
+            PartnerDetails.objects.create(
+                user=user,
+                ngo_certificate_url=ngo_certificate_url
+            )
+
         return user
+
+class DonorDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DonorDetails
+        fields = ['user', 'food_safety_certificate_url', 'rejection_reason', 'updated_at']
+        read_only_fields = ('user', 'rejection_reason', 'updated_at')
+
+class PartnerDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PartnerDetails
+        fields = ['user', 'ngo_certificate_url', 'rejection_reason', 'updated_at']
+        read_only_fields = ('user', 'rejection_reason', 'updated_at')
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
@@ -81,6 +141,9 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         data["role"] = self.user.role
         data["email"] = self.user.email
         data["name"] = self.user.name
+        data['is_email_verified'] = self.user.is_email_verified
+        data['is_business_verified'] = self.user.is_business_verified
+
 
         # if not self.user.is_email_verified:
         #     raise AuthenticationFailed(
@@ -106,14 +169,19 @@ class ResendVerificationSerializer(serializers.Serializer):
     pass
 
 class UserProfileSerializer(serializers.ModelSerializer):
+
+    donor_detail = DonorDetailSerializer(read_only=True)
+    partner_detail = PartnerDetailSerializer(read_only=True)
+
     class Meta:
         model = User
         fields = [
             'id', 'email', 'name', 'phone_number', 'role',
             'business_name', 'business_registration_number', 'organisation_type',
-            'address', 'city', 'country', 'latitude', 'longitude', 'created_at', 'is_business_verified'
+            'address', 'city', 'country', 'latitude', 'longitude', 'created_at', 'is_business_verified',
+            'donor_detail', 'partner_detail'
         ]
-        read_only_fields = ['id', 'email', 'role', 'created_at', 'is_business_verified']
+        read_only_fields = ['id', 'email', 'role', 'created_at', 'is_business_verified', 'donor_detail', 'partner_profile']
 
 class AdminRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
