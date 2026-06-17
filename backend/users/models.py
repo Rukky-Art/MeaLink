@@ -119,7 +119,7 @@ class PartnerDetails(models.Model):
     #     MEDIUM = "51-200", "51 - 200 People"
     #     LARGE = "201+", "201+ People"
 
-    user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name="partner_profile")
+    user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name="partner_detail")
 
     #ngo_registration_number = models.CharField(max_length=100)
     #feeding_capacity = models.CharField(max_length=10, choices=CapacityTiers.choices, default=CapacityTiers.SMALL)

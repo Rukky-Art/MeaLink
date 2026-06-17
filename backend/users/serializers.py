@@ -12,13 +12,18 @@ User = get_user_model()
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
 
+      # Add these two lines ✅
+    food_safety_certificate_url = serializers.URLField(write_only=True, required=False, allow_null=True)
+    ngo_certificate_url = serializers.URLField(write_only=True, required=False, allow_null=True)
+
     class Meta:
         model = User
         fields = [
             'id', 'email', 'name', 'phone_number', 'role', 
             'business_name', 'business_registration_number', 'organisation_type',
             'address', 'city', 'country', 'latitude', 'longitude', 'password', 'created_at', 
-            'is_email_verified', 'is_business_verified',
+            'is_email_verified', 'is_business_verified', 
+            'food_safety_certificate_url', 'ngo_certificate_url'
         ]
         read_only_fields = ['id', 'created_at', 'is_email_verified', 'is_business_verified']
 
@@ -181,7 +186,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'address', 'city', 'country', 'latitude', 'longitude', 'created_at', 'is_business_verified',
             'donor_detail', 'partner_detail'
         ]
-        read_only_fields = ['id', 'email', 'role', 'created_at', 'is_business_verified', 'donor_detail', 'partner_profile']
+        read_only_fields = ['id', 'email', 'role', 'created_at', 'is_business_verified', 'donor_detail', 'partner_detail']
 
 class AdminRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
