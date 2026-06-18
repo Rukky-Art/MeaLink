@@ -1,9 +1,18 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router'; 
 import { useDispatch, useSelector } from 'react-redux';
 import { ChevronLeft, Plus, Package, Clock } from 'lucide-react';
-import { fetchMyListings } from '../../store/slices/foodSlice';
 import { formatDeadlineWithTime } from '../../utils/dateUtils';
+import { 
+  fetchMyListings,
+  selectDonorIsLoading,
+  selectDonorError,
+  selectListingsByStatus,
+  selectActiveListings,
+  selectExpiredListings,
+  selectExpiredListingCount,
+  selectMyListings
+} from '../../store/slices/donorSlice';
 
 const STATUS_COLORS = {
   available:   'bg-emerald-100 text-emerald-700',
@@ -25,17 +34,61 @@ const FILTERS = [
 const MyListings = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { myListings, loading, error } = useSelector((state) => state.food);
-  const [activeFilter, setActiveFilter] = useState('all');
+  
+  // ─── READ STRATEGIC STATE ELEMENTS VIA BASE SELECTORS ───
+  const loading = useSelector(selectDonorIsLoading);
+  const error = useSelector(selectDonorError);
+  
+  // ─── READ FILTER FROM URL ───
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeFilter = searchParams.get('status') || 'all';
 
   useEffect(() => {
     dispatch(fetchMyListings());
   }, [dispatch]);
 
-  const filteredListings =
-    activeFilter === 'all'
-      ? myListings
-      : myListings.filter((item) => item.status === activeFilter);
+  // ─── COMPUTE THE COUNTS OUTSIDE THE MAP LOOP ACCORDING TO RULES ───
+  const activeListings = useSelector(selectMyListings)
+  const expiredCount = useSelector(selectExpiredListingCount);
+  
+  const availableCount = activeListings.filter(l => l.status === 'available').length;
+  const claimedCount = activeListings.filter(l => l.status === 'claimed').length;
+  const pickedUpCount = activeListings.filter(l => l.status === 'picked_up').length;
+  const distributedCount = activeListings.filter(l => l.status === 'distributed').length;
+
+  // Total count represents everything that is NOT expired
+  const totalCount = activeListings.length;
+
+  const filterCounts = {
+    all: totalCount,
+    available: availableCount,
+    claimed: claimedCount,
+    picked_up: pickedUpCount,
+    distributed: distributedCount,
+    expired: expiredCount,
+  };
+
+  // ─── RESOLVE FILTERED DATA ARRAY FOR VIEWPORT ───
+  const filteredListings = useSelector((state) => {
+    if (activeFilter === 'expired') {
+      return selectExpiredListings(state);
+    }
+    if (activeFilter === 'available') {
+      return selectActiveListings(state).filter(l => l.status === 'available');
+    }
+    if (activeFilter === 'all') {
+      return selectMyListings(state);
+    }
+    return selectListingsByStatus(state, activeFilter);
+  });
+selectActiveListings
+  const handleFilterChange = (filterKey) => {
+    if (filterKey === 'all') {
+      setSearchParams({}); 
+    } else {
+      setSearchParams({ status: filterKey }); 
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-6 lg:p-10">
@@ -62,14 +115,13 @@ const MyListings = () => {
         {/* Filters */}
         <div className="flex flex-wrap gap-2 mb-6 overflow-x-auto pb-1 scrollbar-none">
           {FILTERS.map((filter) => {
-            const count =
-              filter.key === 'all'
-                ? myListings.length
-                : myListings.filter((l) => l.status === filter.key).length;
+            // Read directly from our pre-computed counts map safely
+            const count = filterCounts[filter.key] ?? 0;
+            
             return (
               <button
                 key={filter.key}
-                onClick={() => setActiveFilter(filter.key)}
+                onClick={() => handleFilterChange(filter.key)} 
                 className={`
                   px-3 md:px-4 py-1.5 rounded-full text-xs md:text-sm font-medium transition-all flex items-center gap-1.5 whitespace-nowrap
                   ${activeFilter === filter.key
@@ -86,7 +138,7 @@ const MyListings = () => {
           })}
         </div>
 
-        {/* Content */}
+        {/* Content Section */}
         {loading ? (
           <div className="bg-white rounded-3xl border border-gray-100 p-12 text-center text-gray-500">
             <div className="animate-pulse space-y-4">
@@ -115,7 +167,7 @@ const MyListings = () => {
           </div>
         ) : (
           <>
-            {/* ── DESKTOP: table (Visible from 1024px and up) ── */}
+            {/* ── DESKTOP: table ── */}
             <div className="hidden lg:block bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -163,7 +215,7 @@ const MyListings = () => {
               </div>
             </div>
 
-            {/* ── MOBILE & TABLET: Card Grid (Visible below 1024px) ── */}
+            {/* ── MOBILE & TABLET: Card Grid ── */}
             <div className="lg:hidden grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4">
               {filteredListings.map((listing) => (
                 <div
@@ -171,18 +223,15 @@ const MyListings = () => {
                   className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col justify-between"
                 >
                   <div>
-                    {/* Status */}
                     <div className="flex mb-3">
                       <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold capitalize whitespace-nowrap ${STATUS_COLORS[listing.status] || 'bg-gray-100 text-gray-600'}`}>
                         {listing.status?.replace('_', ' ')}
                       </span>
                     </div>
 
-                    {/* Name + city */}
                     <p className="font-bold text-gray-900 text-base truncate leading-tight">{listing.food_type}</p>
                     <p className="text-xs text-gray-400 truncate mt-1 mb-4">{listing.pickup_city}</p>
 
-                    {/* Details */}
                     <div className="space-y-2 mb-4">
                       <div className="flex items-center gap-2 text-xs text-gray-500">
                         <Package size={14} className="text-brand-green shrink-0" />
@@ -195,7 +244,6 @@ const MyListings = () => {
                     </div>
                   </div>
 
-                  {/* Action */}
                   <button
                     onClick={() => navigate(`/dashboard/listings/${listing.id}`)}
                     className="w-full py-2.5 text-xs font-bold border border-gray-200 hover:bg-gray-50 rounded-xl transition-colors text-gray-700"

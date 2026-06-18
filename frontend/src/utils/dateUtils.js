@@ -93,3 +93,14 @@ const getOrdinalSuffix = (day) => {
     default: return 'th';
   }
 };
+
+
+export const computeExpiryISO = (days = 0, hours = 0, minutes = 0) => {
+  const totalMs =
+    (Number(days) * 24 * 60 * 60 * 1000) +
+    (Number(hours) * 60 * 60 * 1000) +
+    (Number(minutes) * 60 * 1000);
+
+  if (totalMs <= 0) return null;
+  return new Date(Date.now() + totalMs).toISOString();
+};

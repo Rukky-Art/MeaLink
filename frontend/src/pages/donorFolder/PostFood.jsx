@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { useSelector } from 'react-redux';
 import {
@@ -20,6 +20,10 @@ import {
   Info,
 } from 'lucide-react';
 import api from '../../auth/api';
+import {getDeviceLocation} from "../../utils/geoUtils";
+import {ExpiryPicker} from './ExpiryPicker';
+import {computeExpiryISO} from "../../utils/dateUtils";
+import { useVerificationStatus } from '../../common/useVerificationStatus';
 
 const CATEGORIES = [
   { value: 'cooked', label: 'Cooked Meal', emoji: '🍲' },
@@ -131,6 +135,8 @@ const PostFood = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const [touched, setTouched] = useState({});
+  const [formOpenedAt] = useState(() => new Date()); // captured once, never changes
+  const { isVerified, isPending, isRejected } = useVerificationStatus();
 
 const [formData, setFormData] = useState(() => ({
   food_type: '',
@@ -145,9 +151,27 @@ const [formData, setFormData] = useState(() => ({
   pickup_end_time: '',
   contact_person_name: user?.name || '',
   contact_person_phone: '',
+  pickup_latitude: null,  
+  pickup_longitude: null, 
+  expiry_days: 0,
+expiry_hours: 0,
+expiry_minutes: 0,
 }));
 
+useEffect(() => {
+  const captureGPSCoordinates = async () => {
+    const coords = await getDeviceLocation(); // Grabs cached coords or runs fast lookup
+    if (coords.latitude && coords.longitude) {
+      setFormData((prev) => ({
+        ...prev,
+        pickup_latitude: coords.latitude,
+        pickup_longitude: coords.longitude,
+      }));
+    }
+  };
 
+  captureGPSCoordinates();
+}, []);
   const updateField = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (fieldErrors[field]) {
@@ -280,46 +304,59 @@ const [formData, setFormData] = useState(() => ({
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setGlobalError('');
 
-    if (uploadingImage) {
-      setGlobalError('Please wait for the image to finish uploading.');
-      return;
-    }
 
-    if (!validateStep(2)) {
-      setGlobalError('Please fix the errors before publishing.');
-      return;
-    }
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setGlobalError('');
 
-    setLoading(true);
-    try {
-      const payload = {
-        ...formData,
-        quantity_estimated: parseInt(formData.quantity_estimated, 10),
-        pickup_start_time: new Date(formData.pickup_start_time).toISOString(),
-        pickup_end_time: new Date(formData.pickup_end_time).toISOString(),
-      };
+  if (uploadingImage) {
+    setGlobalError('Please wait for the image to finish uploading.');
+    return;
+  }
 
-      if (!payload.image_url) delete payload.image_url;
-      if (!payload.notes) delete payload.notes;
-      if (!payload.contact_person_phone) delete payload.contact_person_phone;
+  if (!validateStep(2)) {
+    setGlobalError('Please fix the errors before publishing.');
+    return;
+  }
 
-      await api.post('food/my-listings/', payload);
-      setShowSuccess(true);
-      setTimeout(() => navigate('/dashboard'), 2500);
-    } catch (err) {
-      const serverMsg =
-        err?.response?.data?.detail ||
-        err?.response?.data?.message ||
-        'Failed to publish. Please check your inputs and try again.';
-      setGlobalError(serverMsg);
-    } finally {
-      setLoading(false);
-    }
-  };
+  setLoading(true);
+  try {
+  const payload = {
+  ...formData,
+  quantity_estimated: parseInt(formData.quantity_estimated, 10),
+  pickup_start_time: new Date(formData.pickup_start_time).toISOString(),
+  pickup_end_time: new Date(formData.pickup_end_time).toISOString(),
+  expiry_time: computeExpiryISO(formData.expiry_days, formData.expiry_hours, formData.expiry_minutes),
+  pickup_latitude: formData.pickup_latitude ? Number(formData.pickup_latitude) : null,
+  pickup_longitude: formData.pickup_longitude ? Number(formData.pickup_longitude) : null,
+};
+
+// clean up
+if (!payload.image_url) delete payload.image_url;
+if (!payload.notes) delete payload.notes;
+if (!payload.contact_person_phone) delete payload.contact_person_phone;
+if (!payload.expiry_time) delete payload.expiry_time;        // ← if user set no expiry
+delete payload.expiry_days;    // ← don't send these to backend
+delete payload.expiry_hours;
+delete payload.expiry_minutes;
+if (payload.pickup_latitude === null) delete payload.pickup_latitude;
+if (payload.pickup_longitude === null) delete payload.pickup_longitude;
+
+    // Send the exact structure she outlined
+    await api.post('food/my-listings/', payload);
+    setShowSuccess(true);
+    setTimeout(() => navigate('/dashboard'), 2500);
+  } catch (err) {
+    const serverMsg =
+      err?.response?.data?.detail ||
+      err?.response?.data?.message ||
+      'Failed to publish. Please check your inputs and try again.';
+    setGlobalError(serverMsg);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const getMinDateTime = () => {
     const now = new Date();
@@ -728,6 +765,7 @@ const [formData, setFormData] = useState(() => ({
                 </div>
               </div>
 
+
               <div className="p-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div className="space-y-1.5">
@@ -786,7 +824,13 @@ const [formData, setFormData] = useState(() => ({
                 </div>
               </div>
             </section>
-
+<ExpiryPicker
+  days={formData.expiry_days}
+  hours={formData.expiry_hours}
+  minutes={formData.expiry_minutes}
+  onChange={updateField}
+  baseTime={formOpenedAt}  
+/>
             {/* Contact Info */}
             <section className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="p-6 border-b border-gray-50">
@@ -946,33 +990,42 @@ const [formData, setFormData] = useState(() => ({
               </div>
             </section>
 
-            <div className="flex justify-between">
-              <button
-                type="button"
-                onClick={prevStep}
-                className="text-gray-500 font-bold px-6 py-4 rounded-2xl hover:bg-gray-100 flex items-center gap-2 transition-all"
-              >
-                <ChevronLeft size={18} />
-                Edit
-              </button>
-              <button
-                type="submit"
-                disabled={loading || uploadingImage}
-                className="bg-brand-green text-white font-bold px-10 py-4 rounded-2xl flex items-center gap-3 hover:shadow-xl hover:shadow-brand-green/20 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 size={20} className="animate-spin" />
-                    Publishing…
-                  </>
-                ) : (
-                  <>
-                    Publish Listing
-                    <Send size={18} />
-                  </>
-                )}
-              </button>
-            </div>
+           <div className="flex justify-between">
+    <button
+      type="button"
+      onClick={prevStep}
+      className="text-gray-500 font-bold px-6 py-4 rounded-2xl hover:bg-gray-100 flex items-center gap-2 transition-all"
+    >
+      <ChevronLeft size={18} />
+      Edit
+    </button>
+    
+    <button
+      type="submit"
+      // 1. Permanently disable the button if loading, uploading, or NOT verified
+      disabled={loading || uploadingImage || !isVerified}
+      className="bg-brand-green text-white font-bold px-10 py-4 rounded-2xl flex items-center gap-3 hover:shadow-xl hover:shadow-brand-green/20 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      {loading ? (
+        <>
+          <Loader2 size={20} className="animate-spin" />
+          Publishing…
+        </>
+      ) : (
+        <>
+          {/* 2. Dynamically update text to guide unverified users */}
+          {isPending && "Verification Pending..."}
+          {isRejected && "Verification Rejected"}
+          {isVerified && (
+            <>
+              Publish Listing
+              <Send size={18} />
+            </>
+          )}
+        </>
+      )}
+    </button>
+  </div>
           </div>
         )}
       </form>

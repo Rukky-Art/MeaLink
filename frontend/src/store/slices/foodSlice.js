@@ -1,17 +1,28 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../../auth/api'; // Use your custom api instance!
 
+
+
 export const fetchAllListings = createAsyncThunk(
   'food/fetchAllListings',
-  async (_, { rejectWithValue }) => {
+  async (coords, { rejectWithValue }) => {
     try {
-      const response = await api.get('food/all-listings/');
+      // Build search params conditionally if coordinates exist
+      const params = {};
+      if (coords?.latitude && coords?.longitude) {
+        params.latitude = coords.latitude;
+        params.longitude = coords.longitude;
+      }
+
+      // FIXED: Swapped 'axiosInstance' out for your imported 'api'
+      const response = await api.get('food/all-listings/', { params });
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data || "Failed to fetch listings");
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch listings');
     }
   }
 );
+
 
 export const fetchMyListings = createAsyncThunk(
   'food/fetchMyListings',

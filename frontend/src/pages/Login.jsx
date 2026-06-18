@@ -1,93 +1,7 @@
-// import { useForm } from 'react-hook-form';
-// import { Link } from 'react-router';
-// import FormInput from '../components/FormInput'
-// import { zodResolver } from '@hookform/resolvers/zod';
-// import { loginSchema } from '../utils/validation';
-// import { useDispatch, useSelector } from 'react-redux';
-// import { loginUser, fetchUserProfile } from '../store/slices/authSlice';
-// import { useNavigate } from 'react-router';
-
-
-// const Login = () => {
-
-
-//   const dispatch = useDispatch();
-//   const navigate = useNavigate();
-//   const authState = useSelector((state) => state.auth);
-//   const { isLoading, error } = authState; 
-//   const { register, handleSubmit, formState: { errors } } = useForm({
-//     resolver: zodResolver(loginSchema),
-//     mode: "onTouched" 
-//   });
-
-// const onSubmit = async (data) => {
-//   const sanitizedData = {
-//     email: data.email.trim().toLowerCase(),
-//     password: data.password // Don't trim passwords! Spaces can be intentional there.
-//   };
-//   const result = await dispatch(loginUser(sanitizedData));
-//   if (loginUser.fulfilled.match(result)) {
-//     await dispatch(fetchUserProfile());
-//     navigate('/dashboard');
-//   }
-// };
-
-//   return (
-//     <div className="animate-in fade-in duration-500">
-//       {error && <p className="text-red-500 text-sm mb-4">{error.detail || "Login failed"}</p>}
-//       <div className="mb-8">
-//         <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome back</h2>
-//         <p className="text-gray-500">Sign in to your MeaLink account</p>
-//       </div>
-
-//       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-//         <FormInput
-//           label="Email"
-//           name="email"
-//           type="email"
-//           placeholder="you@example.com"
-//           register={register}
-//           error={errors.email}
-//         />
-
-//         <FormInput
-//           label="Password"
-//           name="password"
-//           type="password"
-//           placeholder="••••••••"
-//           register={register}
-//           error={errors.password}
-//         />
-
-//         <button
-//           type="submit"
-//           className="w-full bg-brand-green text-white font-bold py-3.5 rounded-xl hover:bg-opacity-90 transition-all shadow-lg shadow-brand-green/20"
-//           disabled={isLoading}
-//         >
-//           {isLoading ? "Logging in..." : "Login"}
-//         </button>
-//       </form>
-
-//       <div className="mt-8 text-center space-y-4">
-//         <p className="text-gray-600 text-sm">
-//           Don't have an account?{' '}
-//           <Link to="/register/select-role" className="text-brand-green font-bold hover:underline">
-//             Sign up
-//           </Link>
-//         </p>
-        
-//         <Link to="/forgot-password" size="sm" className="block text-gray-500 text-sm hover:text-brand-green transition-colors">
-//           Forgot password?
-//         </Link>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default Login;
-
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link } from 'react-router';
+import { Eye, EyeOff } from 'lucide-react';
 import FormInput from '../components/FormInput';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema } from '../utils/validation';
@@ -100,41 +14,48 @@ const Login = () => {
   const navigate = useNavigate();
   const { isLoading, error } = useSelector((state) => state.auth);
 
+  const [showPassword, setShowPassword]   = useState(false);
+  const [dismissedError, setDismissedError] = useState(null);
+
+  const showBanner = Boolean(error) && error !== dismissedError;
+
+  // Schedule auto-dismiss after 5 s whenever a new, un-dismissed error appears.
+  // The effect body only calls setTimeout — a browser side-effect. setDismissedError
+  // fires inside the timer callback (async), not synchronously in the effect body,
+  // so there is no cascading-render lint violation.
+  useEffect(() => {
+    if (!showBanner) return;
+    const timer = setTimeout(() => setDismissedError(error), 5000);
+    return () => clearTimeout(timer);
+  }, [showBanner, error]);
+
   const { register, handleSubmit, formState: { errors } } = useForm({
     resolver: zodResolver(loginSchema),
     mode: 'onTouched',
-    reValidateMode: 'onChange', // clears errors immediately as user fixes them
+    reValidateMode: 'onChange',
   });
 
   const onSubmit = async (data) => {
-    const sanitizedData = {
-      email: data.email.trim().toLowerCase(),
-      password: data.password,
-    };
+    // Dismiss any banner from the previous attempt before dispatching
+    setDismissedError(error);
 
-    const result = await dispatch(loginUser(sanitizedData));
+    const result = await dispatch(loginUser({
+      email:    data.email.trim().toLowerCase(),
+      password: data.password,
+    }));
 
     if (loginUser.fulfilled.match(result)) {
-      // ─────────────────────────────────────────────────────────────────────
-      // Navigate IMMEDIATELY based on role from the login response payload,
-      // then fetch the full profile in the background. The user lands on their
-      // dashboard right away — no waiting for the profile round-trip.
-      //
-      // result.payload is whatever your loginUser thunk resolves with (the API
-      // response). Adjust the role field name to match your actual API shape.
-      // ─────────────────────────────────────────────────────────────────────
-      const role = result.payload?.role || result.payload?.user?.role;
+      const role = result.payload?.role ?? result.payload?.user?.role;
 
-      // Navigate instantly — don't await profile fetch
       if (role === 'donor') {
         navigate('/dashboard/donor');
       } else if (role === 'partner') {
         navigate('/dashboard/partner');
       } else {
-        navigate('/dashboard'); // fallback if role is unknown
+        navigate('/dashboard');
       }
 
-      // Fire profile fetch in background — store gets updated silently
+      // Fire profile fetch in the background — store updates silently
       dispatch(fetchUserProfile());
     }
   };
@@ -142,17 +63,27 @@ const Login = () => {
   return (
     <div className="animate-in fade-in duration-500">
 
-      {/* Backend error banner */}
-      {error && (
+      {/* Auto-dismissing backend error banner */}
+      {showBanner && (
         <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl mb-6 flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
-          <div className="bg-red-100 p-1 rounded-full">
+          <div className="bg-red-100 p-1 rounded-full flex-shrink-0">
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
             </svg>
           </div>
-          <p className="text-sm font-medium">
-            {error.detail || error.non_field_errors?.[0] || 'Login failed. Please try again.'}
+          <p className="text-sm font-medium flex-1">
+            {error.detail ?? error.non_field_errors?.[0] ?? 'Login failed. Please try again.'}
           </p>
+          <button
+            type="button"
+            onClick={() => setDismissedError(error)}
+            className="text-red-400 hover:text-red-600 transition-colors flex-shrink-0"
+            aria-label="Dismiss error"
+          >
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+          </button>
         </div>
       )}
 
@@ -162,11 +93,6 @@ const Login = () => {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        {/*
-          fieldset disabled= is the semantic, one-shot way to lock every
-          input, select, and button inside the form during submission.
-          No prop-drilling needed — the browser handles it natively.
-        */}
         <fieldset disabled={isLoading} className="border-none p-0 m-0 min-w-0 space-y-4">
 
           <div className={isLoading ? 'opacity-50 pointer-events-none' : ''}>
@@ -180,15 +106,24 @@ const Login = () => {
             />
           </div>
 
-          <div className={isLoading ? 'opacity-50 pointer-events-none' : ''}>
+          <div className={`relative ${isLoading ? 'opacity-50 pointer-events-none' : ''}`}>
             <FormInput
               label="Password"
               name="password"
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               placeholder="••••••••"
               register={register}
               error={errors.password}
             />
+            <button
+              type="button"
+              tabIndex={isLoading ? -1 : 0}
+              onClick={() => setShowPassword((p) => !p)}
+              className="absolute right-4 top-[38px] text-gray-400 hover:text-brand-green transition-colors"
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
           </div>
 
           <button

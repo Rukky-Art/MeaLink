@@ -5,7 +5,7 @@ import {
   ArrowLeft, MapPin, Clock, Package, User, Phone,
   CheckCircle, Lock, AlertCircle, Info, ShieldCheck
 } from 'lucide-react';
-import { fetchMyListings } from '../../store/slices/foodSlice';
+import { fetchMyListings } from '../../store/slices/donorSlice';
 import DonationJourney from '../../components/DonationJourney';
 import {verifyPickup, fetchMyClaims} from '../../store/slices/partnerSlice';
 
@@ -16,7 +16,7 @@ const ListingDetail = () => {
   const navigate  = useNavigate();
   const dispatch  = useDispatch();
 
-const { myListings = [] } = useSelector((state) => state.food);
+const { myListings = [] } = useSelector((state) => state.donor);
  const {
   myClaims = [],
   isLoading: partnerLoading,

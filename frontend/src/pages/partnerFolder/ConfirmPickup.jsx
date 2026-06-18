@@ -34,7 +34,7 @@ const food = claim?.food || null;
 const foodName = food?.food_type || `Claim #${claimId}`;
 const quantity = food?.quantity_estimated || '—';
 const unit = food?.quantity_unit || '';
-const donor = claim?.donor?.name || '—';
+const donor = claim?.donor?.business_name || '—';
 const location = food?.pickup_address || 'Location not specified';
 
 
@@ -64,7 +64,7 @@ const location = food?.pickup_address || 'Location not specified';
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <p className="text-red-500 font-bold mb-4">Claim not found.</p>
+          {/* <p className="text-red-500 font-bold mb-4">Claim not found.</p> */}
           <button onClick={() => navigate('/dashboard/my-claims')} className="text-brand-green font-bold underline">
             Back to My Claims
           </button>

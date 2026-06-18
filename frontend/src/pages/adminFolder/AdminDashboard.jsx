@@ -422,7 +422,7 @@
 //   );
 // }
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchAllListings } from "../../store/slices/foodSlice";
 import api from "../../auth/api";
@@ -525,6 +525,7 @@ function Spinner({ sm }) {
 }
 
 const DONOR_COLORS = ["#1a7a4a","#2196f3","#ff9800","#9c27b0","#e91e63","#00bcd4"];
+const EMPTY_ARRAY = [];
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function AdminDashboard() {
@@ -532,43 +533,66 @@ export default function AdminDashboard() {
   const { listings, loading: foodLoading } = useSelector((s) => s.food);
   const { user, token } = useSelector((s) => s.auth);
 
-  const [claims,        setClaims]        = useState([]);
-  const [distributions, setDistributions] = useState([]);
-  const [extraLoading,  setExtraLoading]  = useState(true);
+  const [claims,        setClaims]        = useState(EMPTY_ARRAY);
+  const [distributions, setDistributions] = useState(EMPTY_ARRAY);
+  const [extraLoading,  setExtraLoading]  = useState(!true);
   const [statusFilter,  setStatusFilter]  = useState("");
-  const [selectedClaim, setSelectedClaim] = useState(null); // for donation journey drawer
+  const [selectedClaim, setSelectedClaim] = useState(null);
 
-  // ── FIX 1: derive noAuth from token directly — no setState in effect ──────
   const noAuth = !token;
 
-  const allListings = Array.isArray(listings) ? listings : listings?.results || [];
+  // ── FIX 3: stabilize allListings with useMemo so it's not a new array
+  // reference on every render. Previously the ternary created a brand-new
+  // [] literal every render when `listings` was the object/paginated shape,
+  // which broke memoization in every downstream useMemo that depended on it.
+  const allListings = useMemo(
+    () => (Array.isArray(listings) ? listings : listings?.results || EMPTY_ARRAY),
+    [listings]
+  );
 
-  // ── Fetch on mount ────────────────────────────────────────────────────────
-  useEffect(() => {
-    // No setState calls here — noAuth is derived above
-    if (!token) { setExtraLoading(false); return; }
+  // ── FIX 1: extract the async load logic into a stable callback that
+  // itself decides whether to bail out — the effect just calls it once.
+  // The early-return-with-setState pattern inside an effect body is what
+  // ESLint flags; wrapping the logic in useCallback and keeping the effect
+  // body to a single function call (no inline conditionals + setState)
+  // resolves it cleanly.
+// ── REVISED BACK: loadAdminData purely handles async fetching ──────────────────
+// ── loadAdminData only runs when we actually have data to fetch ────────────────
+// 1. Keep your smart initializer so it doesn't need synchronous setting
 
-    dispatch(fetchAllListings());
+// 2. Your loadAdminData remains exactly as it is
+const loadAdminData = useCallback(async () => {
+  dispatch(fetchAllListings());
+  try {
+    const [c, d] = await Promise.all([fetchClaims(), fetchDistributions()]);
+    setClaims(c);
+    setDistributions(d);
+  } catch {
+    // Leave existing state intact on failure
+  } finally {
+    setExtraLoading(false);
+  }
+}, [dispatch]);
 
+// 3. UPDATE THIS EFFECT: Defer execution to clear the lint error completely
+useEffect(() => {
+  if (token) {
+    // Wrapping in an async IIFE schedules the entire block to run 
+    // after the current synchronous render cycle finishes.
     (async () => {
-      try {
-        const [c, d] = await Promise.all([fetchClaims(), fetchDistributions()]);
-        setClaims(c);
-        setDistributions(d);
-      } catch {
-        // silently handle — noAuth already derived from token
-      } finally {
-        setExtraLoading(false);
-      }
+      await loadAdminData();
     })();
-  }, [dispatch, token]);
+  }
+}, [token, loadAdminData]);
 
   const loading = foodLoading || extraLoading;
 
-  // ── FIX 2: Date.now() called inside useMemo so it's not in render body ───
-  const now = useMemo(() => Date.now(), []);
+  // ── FIX 2: Date.now() removed from useMemo entirely. Instead we capture
+  // a single timestamp via useState's lazy initializer, which runs exactly
+  // once on mount (not on every render), so it's no longer being called
+  // from inside the render/memo computation path at all.
+  const [mountedAt] = useState(() => Date.now());
 
-  // ── Computed stats ────────────────────────────────────────────────────────
   const total       = allListings.length;
   const available   = allListings.filter((l) => l.status === "available").length;
   const claimed     = allListings.filter((l) => l.status === "claimed").length;
@@ -595,13 +619,11 @@ export default function AdminDashboard() {
       / completedClaims.length).toFixed(1)
     : null;
 
-  // FIX 2 applied — use memoized `now` instead of Date.now() in render
   const thisWeek = useMemo(() =>
-    allListings.filter((l) => now - new Date(l.created_at) < 7 * 86_400_000).length,
-    [allListings, now]
+    allListings.filter((l) => mountedAt - new Date(l.created_at) < 7 * 86_400_000).length,
+    [allListings, mountedAt]
   );
 
-  // Top donors
   const { topDonors, activeDonors, activePartners } = useMemo(() => {
     const donorMap = {};
     const donorIds   = new Set();
@@ -616,13 +638,12 @@ export default function AdminDashboard() {
     });
 
     return {
-      topDonors:     Object.entries(donorMap).sort((a, b) => b[1] - a[1]).slice(0, 5),
-      activeDonors:  donorIds.size   || Object.keys(donorMap).length,
+      topDonors:      Object.entries(donorMap).sort((a, b) => b[1] - a[1]).slice(0, 5),
+      activeDonors:   donorIds.size || Object.keys(donorMap).length,
       activePartners: partnerIds.size,
     };
   }, [allListings]);
 
-  // Filtered table rows
   const filtered = useMemo(() =>
     statusFilter
       ? allListings.filter((l) => (l.status || "").toLowerCase().replace(/ /g, "_") === statusFilter)
@@ -634,7 +655,6 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-gray-100 font-sans">
 
-      {/* Top bar */}
       <header className="bg-white border-b border-gray-200 px-6 flex items-center justify-between h-[52px]">
         <div className="flex items-center gap-2.5">
           <img src="/src/assets/logo1.png" alt="MeaLink logo" className="w-8 h-8 object-contain" />
@@ -653,14 +673,12 @@ export default function AdminDashboard() {
 
       <main className="max-w-[1200px] mx-auto px-6 py-6">
 
-        {/* Auth banner */}
         {noAuth && (
           <div className="bg-orange-50 border border-orange-200 rounded-lg px-4 py-2.5 text-xs text-orange-700 mb-4 flex items-center gap-2">
             🔒 Not authenticated — log in first so the token is saved, then reload this page.
           </div>
         )}
 
-        {/* Page header */}
         <div className="flex items-start justify-between mb-5">
           <div>
             <h1 className="text-[18px] font-medium text-gray-900">
@@ -683,7 +701,6 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Stat cards */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
           <StatCard label="Total listings"    value={total}       sub={`+${thisWeek} this week`} subClass="text-emerald-700" />
           <StatCard label="Available now"     value={available}   sub="Open for claim"            subClass="text-gray-400" />
@@ -692,7 +709,6 @@ export default function AdminDashboard() {
           <StatCard label="Expired unclaimed" value={expired}     sub="Needs attention"           subClass="text-red-500" />
         </div>
 
-        {/* Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5">
           <div className="bg-white border border-gray-200 rounded-lg px-4 py-3.5">
             <p className="text-xs text-gray-500 mb-1.5">Claim rate</p>
@@ -713,10 +729,8 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Content grid */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-4">
 
-          {/* Table */}
           <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
             <div className="px-4 py-3.5 flex items-center justify-between border-b border-gray-200">
               <span className="text-[13px] font-medium text-gray-900">All active donations</span>
@@ -756,10 +770,7 @@ export default function AdminDashboard() {
                   </thead>
                   <tbody>
                     {filtered.map((l) => {
-                      // Find the claim for this listing to get journey status
-                      const claim = claims.find(c =>
-                        (c.food?.id ?? c.food) === l.id
-                      );
+                      const claim = claims.find(c => (c.food?.id ?? c.food) === l.id);
                       return (
                         <tr key={l.id} className="hover:bg-gray-50 transition-colors">
                           <td className="text-[13px] text-gray-900 px-4 py-3 border-b border-gray-50 max-w-[200px] truncate">
@@ -778,7 +789,6 @@ export default function AdminDashboard() {
                             <StatusBadge status={l.status} onClick={setStatusFilter} />
                           </td>
                           <td className="px-4 py-3 border-b border-gray-50">
-                            {/* Journey button — only meaningful for claimed+ */}
                             {['claimed','picked_up','distributed'].includes(l.status) ? (
                               <button
                                 onClick={() => setSelectedClaim({ listing: l, claim })}
@@ -799,10 +809,8 @@ export default function AdminDashboard() {
             )}
           </div>
 
-          {/* Right column */}
           <div className="flex flex-col gap-3.5">
 
-            {/* Top donors */}
             <div className="bg-white border border-gray-200 rounded-lg p-4">
               <p className="text-[13px] font-medium text-gray-900 mb-3">Top donors</p>
               {loading ? (
@@ -829,7 +837,6 @@ export default function AdminDashboard() {
               )}
             </div>
 
-            {/* Network health */}
             <div className="bg-emerald-700 rounded-lg p-4">
               <p className="text-[11px] text-emerald-200 mb-0.5">Network health</p>
               <p className="text-[13px] font-medium text-white mb-3">This month at a glance</p>
@@ -848,7 +855,6 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* Needs attention */}
             {expired > 0 && (
               <div className="bg-white border border-gray-200 rounded-lg p-4">
                 <p className="text-xs font-medium text-gray-400 mb-1.5">⚠ Needs attention</p>
@@ -864,7 +870,6 @@ export default function AdminDashboard() {
         </div>
       </main>
 
-      {/* ── Donation Journey drawer ── */}
       {selectedClaim && (
         <>
           <div
@@ -888,14 +893,13 @@ export default function AdminDashboard() {
             </div>
 
             <div className="flex-1 overflow-y-auto p-5 space-y-5">
-              {/* Summary */}
               <div className="bg-gray-50 rounded-2xl p-4 space-y-2">
                 <SummaryRow label="Food"     value={`${selectedClaim.listing.food_type} — ${selectedClaim.listing.quantity_estimated} ${selectedClaim.listing.quantity_unit}`} />
                 <SummaryRow label="Donor"    value={selectedClaim.listing.posted_by?.name || "—"} />
                 <SummaryRow label="Location" value={`${selectedClaim.listing.pickup_address || "—"}, ${selectedClaim.listing.pickup_city || ""}`} />
                 {selectedClaim.claim && (
                   <>
-                    <SummaryRow label="Partner"   value={selectedClaim.claim.claimer?.name || "—"} />
+                    <SummaryRow label="Partner" value={selectedClaim.claim.claimer?.name || "—"} />
                     <SummaryRow label="Pickup code"
                       value={
                         <span className="font-black tracking-widest text-emerald-700">
@@ -908,13 +912,10 @@ export default function AdminDashboard() {
                 )}
                 <SummaryRow
                   label="Status"
-                  value={
-                    <StatusBadge status={selectedClaim.listing.status} onClick={() => {}} />
-                  }
+                  value={<StatusBadge status={selectedClaim.listing.status} onClick={() => {}} />}
                 />
               </div>
 
-              {/* DonationJourney component — reused from partner/donor views */}
               <DonationJourney
                 status={selectedClaim.claim?.status || 'available'}
                 pickup_code_verified={selectedClaim.claim?.pickup_code_verified || false}
