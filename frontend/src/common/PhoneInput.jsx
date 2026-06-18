@@ -41,8 +41,8 @@ const DIAL_CODES = [
     flag:         '🇳🇬',
     localLength:  11,   // 08149376175 — 11 digits with 0
     localDigits:  10,   // 8149376175  — 10 digits without 0 (what goes to backend)
-    placeholder:  '0814 937 6175',
-    example:      '08149376175',
+    placeholder:  '0813 767 0975',
+    example:      '08137670975',
   },
   {
     country:      'Cameroon',
@@ -86,10 +86,7 @@ const DIAL_CODES = [
   },
 ];
 
-export const dialForCountry = (countryName) =>
-  DIAL_CODES.find(
-    (d) => d.country.toLowerCase() === countryName?.toLowerCase().trim()
-  ) ?? DIAL_CODES[0];
+
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 

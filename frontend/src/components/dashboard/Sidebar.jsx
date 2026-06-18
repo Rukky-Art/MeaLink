@@ -198,6 +198,7 @@ const Sidebar = () => {
         label: 'Donor Verification',
         icon: UserCheck,
         children: [
+          { label: 'All',      path: '/dashboard/admin/donor-verification?status=all' },
           { label: 'Pending',      path: '/dashboard/admin/donor-verification?status=pending' },
           { label: 'Verified',     path: '/dashboard/admin/donor-verification?status=verified' },
           { label: 'Rejected',     path: '/dashboard/admin/donor-verification?status=rejected' },
@@ -207,8 +208,9 @@ const Sidebar = () => {
         label: 'Partner Verification',
         icon: UserCheck,
         children: [
+          { label: 'All',     path: '/dashboard/admin/partner-verification?status=all' },
           { label: 'Pending',      path: '/dashboard/admin/partner-verification?status=pending' },
-          { label: 'Approved',     path: '/dashboard/admin/partner-verification?status=approved' },
+          { label: 'Verified',     path: '/dashboard/admin/partner-verification?status=verified' },
           { label: 'Rejected',     path: '/dashboard/admin/partner-verification?status=rejected' },
         ],
       }

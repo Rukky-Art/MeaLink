@@ -9,6 +9,8 @@ import { authSchema } from '../utils/validation';
 import { registerUser } from '../store/slices/authSlice';
 import logo1 from '../assets/logo1.png';
 import meal from '../assets/meal.png';
+import PhoneInput from '../common/PhoneInput';
+import { dialForCountry } from '../common/DialForCountry';
 
 const FormSelect = ({ label, name, options, register, error, placeholder, disabled }) => (
   <div className="space-y-1.5">
@@ -76,109 +78,8 @@ const FileUploadDropzone = ({ label, description, registerName, register, error,
   );
 };
 
-const DIAL_CODES = [
-  { country: 'Nigeria',  code: 'NG', dial: '234', flag: '🇳🇬', expectedLength: 11, placeholder: '0803 123 4567' },
-  { country: 'Cameroon', code: 'CM', dial: '237', flag: '🇨🇲', expectedLength: 9,  placeholder: '677 123 456' },
-  { country: 'Kenya',    code: 'KE', dial: '254', flag: '🇰🇪', expectedLength: 10, placeholder: '0712 345 678' },
-  { country: 'Liberia',  code: 'LR', dial: '231', flag: '🇱🇷', expectedLength: 9,  placeholder: '088 123 456' },
-  { country: 'Sudan',    code: 'SD', dial: '249', flag: '🇸🇩', expectedLength: 9,  placeholder: '091 123 456' },
-];
-
-const dialForCountry = (countryName) =>
-  DIAL_CODES.find((d) => d.country.toLowerCase() === countryName?.toLowerCase().trim()) ?? DIAL_CODES[0];
 
 
-const PhoneInput = ({ value, onChange, onBlur, error, disabled, defaultDial }) => {
-  const [dialOverride, setDialOverride] = useState(null);
-  const activeDial = dialOverride ?? defaultDial ?? DIAL_CODES[0];
-
-  const getLocalDigits = (fullVal, dial) => {
-    if (!fullVal) return '';
-    const prefix = `+${dial.dial}`;
-    if (fullVal.startsWith(prefix)) {
-      return fullVal.slice(prefix.length);
-    }
-    return fullVal.replace(/\D/g, '');
-  };
-
-  // Derived directly from props — no useState, no useEffect needed
-  const localNumber = getLocalDigits(value, activeDial);
-
-  const handleDialChange = (e) => {
-    const entry = DIAL_CODES.find((d) => d.dial === e.target.value) ?? DIAL_CODES[0];
-    setDialOverride(entry);
-    const cleanedDigits = localNumber.replace(/\D/g, '').slice(0, entry.expectedLength);
-    onChange(entry.dial && cleanedDigits ? `+${entry.dial}${cleanedDigits}` : cleanedDigits);
-  };
-
-  const handleLocalChange = (e) => {
-    const raw = e.target.value;
-    let digits = raw.replace(/\D/g, '');
-    if (digits.length > activeDial.expectedLength) {
-      digits = digits.slice(0, activeDial.expectedLength);
-    }
-    onChange(activeDial.dial && digits ? `+${activeDial.dial}${digits}` : digits);
-  };
-
-  return (
-    <div className="space-y-1.5">
-      <div className="flex justify-between items-center pl-1">
-        <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider">
-          Phone Number
-        </label>
-        <span className="text-[10px] text-gray-400 font-mono">
-          {localNumber.length}/{activeDial.expectedLength} Digits
-        </span>
-      </div>
-
-      <div className={`flex items-stretch border rounded-xl overflow-hidden transition-all duration-200
-        ${error ? 'border-red-300 focus-within:ring-4 focus-within:ring-red-500/10' : 'border-gray-200 focus-within:ring-4 focus-within:ring-mealink-orange/10 focus-within:border-mealink-orange'}
-        ${disabled ? 'opacity-50 bg-gray-100' : 'bg-gray-50/50 focus-within:bg-white'}`}
-      >
-        <div className="relative flex-shrink-0 border-r border-gray-200 bg-transparent">
-          <select
-            value={activeDial.dial}
-            onChange={handleDialChange}
-            disabled={disabled}
-            aria-label="Country dial code"
-            className="h-full appearance-none bg-transparent pl-3 pr-7 py-3 text-sm text-gray-700 focus:outline-none cursor-pointer disabled:cursor-not-allowed"
-          >
-            {DIAL_CODES.map((d) => (
-              <option key={d.code} value={d.dial}>
-                {d.flag} +{d.dial || '—'}
-              </option>
-            ))}
-          </select>
-          <ChevronDown
-            size={14}
-            className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-          />
-        </div>
-
-        <input
-          type="text"
-          inputMode="numeric"
-          value={localNumber}
-          onChange={handleLocalChange}
-          onBlur={onBlur}
-          disabled={disabled}
-          placeholder={activeDial.placeholder}
-          className="flex-1 px-4 py-3 text-sm text-gray-800 bg-transparent focus:outline-none disabled:cursor-not-allowed placeholder:text-gray-400"
-        />
-      </div>
-
-      {localNumber && (
-        <p className="text-[11px] text-gray-400 pl-1">
-          Will be sent as:{' '}
-          <span className="font-mono font-semibold text-mealink-green">
-            +{activeDial.dial}{localNumber}
-          </span>
-        </p>
-      )}
-      {error && <p className="text-xs text-red-500 mt-1 font-medium pl-1">{error.message}</p>}
-    </div>
-  );
-};
 
 const DONOR_TYPES = [
   { value: 'restaurant',   label: 'Restaurant'   },
