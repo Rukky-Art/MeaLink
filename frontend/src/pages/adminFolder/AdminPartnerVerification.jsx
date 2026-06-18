@@ -250,21 +250,21 @@ const AdminPartnerVerification = () => {
                   ) : filtered.map(d => (
                     <tr key={d.id} className="hover:bg-slate-50/60 transition-colors">
                       <td className="px-5 py-4">
-                        <p className="font-bold text-slate-800 text-sm">{d.name}</p>
+                        <p className="font-bold text-slate-800 text-sm">{d.user?.business_name}</p>
                         <p className="text-xs text-slate-400 mt-0.5">{d.email}</p>
                       </td>
                       <td className="px-5 py-4 text-sm text-slate-600 whitespace-nowrap">
-                        {ORG_TYPE_LABELS[d.organisation_type] || d.organisation_type || '—'}
+                        {ORG_TYPE_LABELS[d.user?.organisation_type] || d.user?.organisation_type || '—'}
                       </td>
                       <td className="px-5 py-4 text-sm text-slate-600">
-                        {d.business_registration_number || '—'}
+                        {d.user?.business_registration_number || '—'}
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-1 text-slate-500 text-sm">
-                          <MapPin size={13} className="text-slate-400 shrink-0" />{d.city || '—'}
+                          <MapPin size={13} className="text-slate-400 shrink-0" />{d.user?.country || '—'}
                         </div>
                       </td>
-                      <td className="px-5 py-4"><StatusBadge status={d.verification_status || 'pending'} /></td>
+                      <td className="px-5 py-4"><StatusBadge status={d.verification_status || '-'} /></td>
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-2 flex-wrap">
                           <button onClick={() => openModal(d, 'view')}
@@ -299,10 +299,10 @@ const AdminPartnerVerification = () => {
             <div className="sticky top-0 bg-white rounded-t-3xl border-b border-slate-100 px-7 py-5 flex items-start justify-between z-10">
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <h2 className="text-lg font-black text-slate-900">{selected.name}</h2>
+                  <h2 className="text-lg font-black text-slate-900">{selected.user?.business_name}</h2>
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-50 text-purple-600">Partner</span>
                 </div>
-                <p className="text-xs text-slate-400">Reg. {selected.business_registration_number || '—'}</p>
+                <p className="text-xs text-slate-400">Reg. {selected.user?.business_registration_number || '—'}</p>
               </div>
               <button onClick={closeModal} className="p-2 hover:bg-slate-100 rounded-xl transition-colors">
                 <X size={18} className="text-slate-400" />
@@ -313,14 +313,14 @@ const AdminPartnerVerification = () => {
               <div>
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Registration Details</p>
                 <div className="bg-slate-50 rounded-2xl px-4 divide-y divide-slate-100">
-                  <DetailRow label="Organisation"   value={selected.name} />
-                  <DetailRow label="Type"           value={ORG_TYPE_LABELS[selected.organisation_type] || selected.organisation_type} />
-                  <DetailRow label="Reg. number"    value={selected.business_registration_number} />
-                  <DetailRow label="Email"          value={selected.email} />
-                  <DetailRow label="Phone"          value={selected.phone_number} />
-                  <DetailRow label="Operating zone" value={`${selected.city || '—'}${selected.country ? ', ' + selected.country : ''}`} />
-                  <DetailRow label="Address"        value={selected.address} />
-                  <DetailRow label="Status"         value={<StatusBadge status={selected.verification_status || 'pending'} />} />
+                  <DetailRow label="Organisation"   value={selected.user?.business_name} />
+                  <DetailRow label="Type"           value={ORG_TYPE_LABELS[selected.user?.organisation_type] || selected.user?.organisation_type} />
+                  <DetailRow label="Reg. number"    value={selected.user?.business_registration_number} />
+                  <DetailRow label="Email"          value={selected.user?.email} />
+                  <DetailRow label="Phone"          value={selected.user?.phone_number} />
+                  <DetailRow label="Operating zone" value={`${selected.user?.city || '—'}${selected.user?.country ? ', ' + selected.user?.country : ''}`} />
+                  <DetailRow label="Address"        value={selected.user?.address} />
+                  <DetailRow label="Status"         value={<StatusBadge status={selected.verification_status || '-'} />} />
                 </div>
               </div>
 
@@ -336,21 +336,21 @@ const AdminPartnerVerification = () => {
                 </div>
               )}
 
-              {selected.certificate_url && (
+              {selected.user?.partner_detail?.ngo_certificate_url && (
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Business Registration Certificate</p>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">NGO Certificate</p>
                     <button onClick={() => setCertZoomed(true)} className="flex items-center gap-1.5 text-xs font-bold text-brand-green hover:underline">
                       <ZoomIn size={13} /> Full view
                     </button>
                   </div>
                   <div className="relative h-48 bg-slate-100 rounded-2xl overflow-hidden cursor-zoom-in border border-slate-200" onClick={() => setCertZoomed(true)}>
-                    <img src={selected.certificate_url} alt="Certificate" className="w-full h-full object-cover" />
+                    <img src={selected.user?.partner_detail?.ngo_certificate_url} alt="Certificate" className="w-full h-full object-cover" />
                   </div>
                 </div>
               )}
 
-              {selected.admin_note && modalMode === 'view' && (
+              {selected.note && modalMode === 'view' && (
                 <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4">
                   <p className="text-[10px] font-bold text-amber-500 uppercase tracking-wider mb-1">Admin Note</p>
                   <p className="text-sm text-amber-800 font-medium">{selected.admin_note}</p>
@@ -449,14 +449,14 @@ const AdminPartnerVerification = () => {
         </div>
       )}
 
-      {certZoomed && selected?.certificate_url && (
+      {certZoomed && selected?.user?.partner_detail?.ngo_certificate_url && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={() => setCertZoomed(false)}>
           <div className="relative max-w-3xl w-full" onClick={e => e.stopPropagation()}>
             <button onClick={() => setCertZoomed(false)}
               className="absolute -top-4 -right-4 w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-lg z-10">
               <X size={16} className="text-slate-600" />
             </button>
-            <img src={selected.certificate_url} alt="Certificate" className="w-full rounded-2xl shadow-2xl" />
+            <img src={selected.user?.partner_detail?.ngo_certificate_url} alt="Certificate" className="w-full rounded-2xl shadow-2xl" />
           </div>
         </div>
       )}
